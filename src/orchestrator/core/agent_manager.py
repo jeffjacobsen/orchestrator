@@ -1,7 +1,7 @@
 """Agent lifecycle management with CRUD operations."""
 
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from orchestrator.core.agent import Agent
 from orchestrator.core.types import AgentConfig, AgentStatus, AgentRole
@@ -51,6 +51,7 @@ class AgentManager:
         working_directory: Optional[str] = None,
         allowed_tools: Optional[List[str]] = None,
         permission_mode: str = "bypassPermissions",
+        progress_callback: Optional[Callable[[str, str], None]] = None,
     ) -> Agent:
         """
         Create a new agent with custom configuration.
@@ -296,6 +297,7 @@ class AgentManager:
         agent = Agent(
             agent_id=agent_id,
             config=config,
+            progress_callback=progress_callback,
         )
 
         self.agents[agent_id] = agent

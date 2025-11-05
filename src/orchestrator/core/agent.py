@@ -4,7 +4,7 @@ import asyncio
 import os
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from claude_agent_sdk import (
     query,
     ClaudeAgentOptions,
@@ -40,6 +40,7 @@ class Agent:
         agent_id: str,
         config: AgentConfig,
         enable_logging: bool = True,
+        progress_callback: Optional[Callable[[str, str], None]] = None,
     ) -> None:
         self.agent_id = agent_id
         self.config = config
@@ -53,6 +54,9 @@ class Agent:
         self.created_at = datetime.now(timezone.utc)
         self.started_at: Optional[datetime] = None
         self.completed_at: Optional[datetime] = None
+
+        # Progress callback for real-time updates
+        self.progress_callback = progress_callback
 
         # File logging - lazy import to avoid circular dependency
         from orchestrator.observability.agent_logger import AgentLogger
@@ -76,6 +80,10 @@ class Agent:
         self.started_at = datetime.now(timezone.utc)
         start_time = time.time()
 
+        # Notify progress callback that agent started
+        if self.progress_callback:
+            self.progress_callback("started", "")
+
         try:
             # Log the prompt
             self.logger.log_prompt(task_prompt)
@@ -94,9 +102,16 @@ class Agent:
                     for block in message.content:
                         if isinstance(block, TextBlock):
                             output_text += block.text
+                        elif isinstance(block, ThinkingBlock):
+                            # Report thinking activity
+                            if self.progress_callback:
+                                self.progress_callback("thinking", "")
                         elif isinstance(block, ToolUseBlock):
                             # Track tool usage
                             self._track_tool_use(block)
+                            # Report tool activity
+                            if self.progress_callback:
+                                self.progress_callback("tool_call", block.name)
                         elif isinstance(block, ToolResultBlock):
                             # Update tool call with result
                             self._track_tool_result(block)
@@ -113,6 +128,10 @@ class Agent:
             self.status = AgentStatus.COMPLETED
             self.completed_at = datetime.now(timezone.utc)
 
+            # Notify progress callback of completion
+            if self.progress_callback:
+                self.progress_callback("completed", "")
+
             return TaskResult(
                 agent_id=self.agent_id,
                 task_description=task_prompt,
@@ -126,6 +145,10 @@ class Agent:
             self.status = AgentStatus.FAILED
             self.completed_at = datetime.now(timezone.utc)
             self.metrics.execution_time_seconds = time.time() - start_time
+
+            # Notify progress callback of failure
+            if self.progress_callback:
+                self.progress_callback("failed", str(e))
 
             return TaskResult(
                 agent_id=self.agent_id,
