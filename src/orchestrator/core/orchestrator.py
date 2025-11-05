@@ -12,6 +12,7 @@ from orchestrator.workflow.executor import WorkflowExecutor
 from orchestrator.observability.monitor import AgentMonitor
 from orchestrator.observability.logger import StructuredLogger
 from orchestrator.observability.metrics import MetricsCollector
+from orchestrator.observability.progress import ProgressTracker
 
 
 class Orchestrator:
@@ -35,6 +36,7 @@ class Orchestrator:
         db_path: Optional[Path] = None,
         log_path: Optional[Path] = None,
         enable_monitoring: bool = True,
+        enable_progress_display: bool = True,
     ) -> None:
         """
         Initialize the orchestrator.
@@ -46,6 +48,7 @@ class Orchestrator:
             db_path: Path to SQLite database (optional)
             log_path: Path to log file (optional)
             enable_monitoring: Enable real-time monitoring
+            enable_progress_display: Enable real-time progress display
         """
         # Store working directory
         self.working_directory = working_directory
@@ -54,6 +57,7 @@ class Orchestrator:
         self.logger = StructuredLogger(log_file=log_path)
         self.metrics = MetricsCollector()
         self.monitor = AgentMonitor(logger=self.logger, metrics=self.metrics)
+        self.progress_tracker = ProgressTracker(enabled=enable_progress_display)
 
         # Core components
         self.agent_manager = AgentManager(
@@ -64,6 +68,7 @@ class Orchestrator:
         self.executor = WorkflowExecutor(
             agent_manager=self.agent_manager,
             monitor=self.monitor,
+            progress_tracker=self.progress_tracker,
         )
 
         # State
@@ -302,6 +307,12 @@ class Orchestrator:
             subtasks=len(task.subtasks),
         )
 
+        # Extract workflow step names for progress display
+        workflow_steps = [subtask["description"] for subtask in task.subtasks]
+
+        # Start progress tracking
+        self.progress_tracker.start(workflow_steps=workflow_steps)
+
         # Step 2: Execute the workflow
         try:
             if execution_mode == "parallel":
@@ -335,6 +346,9 @@ class Orchestrator:
             raise
 
         finally:
+            # Stop progress tracking
+            self.progress_tracker.stop()
+
             # Step 4: Cleanup agents
             deleted = await self.executor.cleanup_workflow_agents(task)
             self.logger.info("workflow_cleanup", agents_deleted=deleted)

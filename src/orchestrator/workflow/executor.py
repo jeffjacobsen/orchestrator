@@ -1,10 +1,11 @@
 """Workflow execution engine."""
 
 import asyncio
-from typing import Any, Dict, List, cast
+from typing import Any, Callable, Dict, List, Optional, cast
 from orchestrator.core.agent_manager import AgentManager
 from orchestrator.core.types import OrchestratorTask, AgentStatus, TaskResult
 from orchestrator.observability.monitor import AgentMonitor
+from orchestrator.observability.progress import ProgressTracker
 
 
 class WorkflowExecutor:
@@ -22,9 +23,11 @@ class WorkflowExecutor:
         self,
         agent_manager: AgentManager,
         monitor: AgentMonitor,
+        progress_tracker: Optional[ProgressTracker] = None,
     ) -> None:
         self.agent_manager = agent_manager
         self.monitor = monitor
+        self.progress_tracker = progress_tracker
 
     async def execute_sequential(
         self,
@@ -299,11 +302,41 @@ class WorkflowExecutor:
         previous_output = None
 
         for i, subtask in enumerate(task.subtasks):
+            # Create progress callback for this agent
+            def make_progress_callback(agent_id: str, agent_name: str, agent_role: str):
+                """Create a progress callback for an agent."""
+                def progress_callback(event: str, data: str) -> None:
+                    if not self.progress_tracker:
+                        return
+
+                    if event == "started":
+                        self.progress_tracker.agent_created(agent_id, agent_name, agent_role)
+                        self.progress_tracker.agent_started(agent_id)
+                    elif event == "thinking":
+                        self.progress_tracker.thinking(agent_id)
+                    elif event == "tool_call":
+                        self.progress_tracker.tool_call(agent_id, data)
+                    elif event == "completed":
+                        # Will update with cost after task completes
+                        pass
+                    elif event == "failed":
+                        self.progress_tracker.agent_failed(agent_id, data)
+
+                return progress_callback
+
             # Create specialized agent for this subtask
             agent = await self.agent_manager.create_specialized_agent(
                 role=subtask["role"],
                 task_context=subtask.get("context", ""),
             )
+
+            # Set up progress callback
+            if self.progress_tracker:
+                agent.progress_callback = make_progress_callback(
+                    agent.agent_id,
+                    agent.config.name,
+                    agent.config.role.value
+                )
 
             task.assigned_agents.append(agent.agent_id)
 
@@ -318,6 +351,10 @@ class WorkflowExecutor:
 
             # Log completion
             await self.monitor.log_task_completed(agent, subtask["description"])
+
+            # Update progress tracker with completion and cost
+            if self.progress_tracker:
+                self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
 
             # Pass output to next agent
             previous_output = result.output
@@ -703,6 +740,28 @@ class WorkflowExecutor:
             >>> # 3. Tasks following a logical pipeline
             >>> # 4. When order matters (analyze → plan → build → test → review)
         """
+        # Create progress callback function
+        def make_progress_callback(agent_id: str, agent_name: str, agent_role: str):
+            """Create a progress callback for an agent."""
+            def progress_callback(event: str, data: str) -> None:
+                if not self.progress_tracker:
+                    return
+
+                if event == "started":
+                    self.progress_tracker.agent_created(agent_id, agent_name, agent_role)
+                    self.progress_tracker.agent_started(agent_id)
+                elif event == "thinking":
+                    self.progress_tracker.thinking(agent_id)
+                elif event == "tool_call":
+                    self.progress_tracker.tool_call(agent_id, data)
+                elif event == "completed":
+                    # Will update with cost after task completes
+                    pass
+                elif event == "failed":
+                    self.progress_tracker.agent_failed(agent_id, data)
+
+            return progress_callback
+
         # Create all agents
         agents = []
         for subtask in task.subtasks:
@@ -710,6 +769,15 @@ class WorkflowExecutor:
                 role=subtask["role"],
                 task_context=subtask.get("context", ""),
             )
+
+            # Set up progress callback
+            if self.progress_tracker:
+                agent.progress_callback = make_progress_callback(
+                    agent.agent_id,
+                    agent.config.name,
+                    agent.config.role.value
+                )
+
             agents.append((agent, subtask))
             task.assigned_agents.append(agent.agent_id)
 
@@ -739,6 +807,11 @@ class WorkflowExecutor:
             else:
                 # Type narrowing: result is TaskResult here (not BaseException)
                 await self.monitor.log_task_completed(agent, subtask["description"])
+
+                # Update progress tracker with completion and cost
+                if self.progress_tracker:
+                    self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
+
                 processed_results.append(cast(TaskResult, result))
 
         return processed_results
