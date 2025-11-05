@@ -39,6 +39,7 @@ class Agent:
         self,
         agent_id: str,
         config: AgentConfig,
+        enable_logging: bool = True,
     ) -> None:
         self.agent_id = agent_id
         self.config = config
@@ -52,6 +53,14 @@ class Agent:
         self.created_at = datetime.now(timezone.utc)
         self.started_at: Optional[datetime] = None
         self.completed_at: Optional[datetime] = None
+
+        # File logging - lazy import to avoid circular dependency
+        from orchestrator.observability.agent_logger import AgentLogger
+        self.logger = AgentLogger(
+            agent_id=agent_id,
+            agent_name=config.name,
+            enabled=enable_logging
+        )
 
     async def execute_task(self, task_prompt: str) -> TaskResult:
         """
@@ -68,12 +77,18 @@ class Agent:
         start_time = time.time()
 
         try:
+            # Log the prompt
+            self.logger.log_prompt(task_prompt)
+
             # Configure SDK client options
             options = self._build_options()
 
             # Process streaming response
             output_text = ""
             async for message in query(prompt=task_prompt, options=options):
+                # Log every message
+                self.logger.log_message(message)
+
                 if isinstance(message, AssistantMessage):
                     # Process text blocks
                     for block in message.content:
@@ -134,12 +149,18 @@ class Agent:
         """
         self.status = AgentStatus.RUNNING
 
+        # Log the message
+        self.logger.log_prompt(f"[CONTINUE] {message}")
+
         # Configure SDK client options
         options = self._build_options()
 
         # Process response
         output_text = ""
         async for msg in query(prompt=message, options=options):
+            # Log every message
+            self.logger.log_message(msg)
+
             if isinstance(msg, AssistantMessage):
                 for block in msg.content:
                     if isinstance(block, TextBlock):

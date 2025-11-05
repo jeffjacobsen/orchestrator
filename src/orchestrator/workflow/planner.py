@@ -116,15 +116,209 @@ class TaskPlanner:
         task_type: str = "custom",
     ) -> OrchestratorTask:
         """
-        Create a task plan with subtasks.
+        Create a task plan with subtasks decomposed by specialized roles.
+
+        This method transforms a high-level task description into a structured
+        workflow with specific subtasks assigned to appropriate agent roles.
+        It uses predefined templates for common task patterns.
 
         Args:
             task_id: Unique identifier for the task
             description: High-level task description
-            task_type: Type of task (feature_implementation, bug_fix, etc.)
+            task_type: Type of task (feature_implementation, bug_fix, code_review,
+                      documentation, or custom)
 
         Returns:
-            OrchestratorTask with decomposed subtasks
+            OrchestratorTask with decomposed subtasks, each assigned to a specialized
+            agent role with context and description.
+
+        Examples:
+            Feature implementation decomposition:
+
+            >>> from orchestrator.workflow.planner import TaskPlanner
+            >>> planner = TaskPlanner()
+            >>>
+            >>> # Plan a feature implementation
+            >>> task = planner.plan_task(
+            ...     task_id="task-001",
+            ...     description="Add OAuth2 authentication to the API",
+            ...     task_type="feature_implementation"
+            ... )
+            >>>
+            >>> print(f"Task: {task.description}")
+            >>> print(f"Subtasks: {len(task.subtasks)}")
+            >>> for i, subtask in enumerate(task.subtasks, 1):
+            ...     print(f"{i}. [{subtask['role'].value}] {subtask['task']}")
+            Task: Add OAuth2 authentication to the API
+            Subtasks: 5
+            1. [analyst] Research requirements and analyze existing codebase
+            2. [planner] Create implementation plan based on analysis
+            3. [builder] Implement the feature following the plan
+            4. [tester] Write and run tests for the new feature
+            5. [reviewer] Review that implementation follows the plan and meets quality standards
+
+            Bug fix decomposition:
+
+            >>> # Plan a bug fix workflow
+            >>> bug_task = planner.plan_task(
+            ...     task_id="bug-042",
+            ...     description="Fix memory leak in background job processor",
+            ...     task_type="bug_fix"
+            ... )
+            >>>
+            >>> print(f"Bug fix workflow for: {bug_task.description}")
+            >>> for subtask in bug_task.subtasks:
+            ...     role = subtask['role'].value
+            ...     desc = subtask['description']
+            ...     print(f"  {role}: {desc}")
+            Bug fix workflow for: Fix memory leak in background job processor
+              analyst: Investigate and analyze the root cause of the bug: Fix memory leak...
+              planner: Create a fix plan based on root cause analysis: Fix memory leak...
+              builder: Implement the fix following the plan: Fix memory leak...
+              tester: Test the fix and add regression tests: Fix memory leak...
+              reviewer: Review that the fix follows the plan and resolves the issue: Fix...
+
+            Code review decomposition:
+
+            >>> # Plan a code review workflow
+            >>> review_task = planner.plan_task(
+            ...     task_id="review-pr-123",
+            ...     description="Review pull request #123 for security and performance",
+            ...     task_type="code_review"
+            ... )
+            >>>
+            >>> print(f"Review workflow: {len(review_task.subtasks)} steps")
+            >>> for i, subtask in enumerate(review_task.subtasks, 1):
+            ...     print(f"  Step {i}: {subtask['role'].value}")
+            Review workflow: 4 steps
+              Step 1: analyst
+              Step 2: planner
+              Step 3: reviewer
+              Step 4: tester
+
+            Documentation workflow decomposition:
+
+            >>> # Plan documentation workflow
+            >>> doc_task = planner.plan_task(
+            ...     task_id="doc-api",
+            ...     description="Create comprehensive API documentation",
+            ...     task_type="documentation"
+            ... )
+            >>>
+            >>> print(f"Documentation workflow:")
+            >>> for subtask in doc_task.subtasks:
+            ...     print(f"  - {subtask['role'].value}: {subtask['task']}")
+            Documentation workflow:
+              - analyst: Research and understand component behavior, APIs, and usage
+              - planner: Create documentation plan with structure and coverage
+              - documenter: Write comprehensive documentation following the plan
+              - reviewer: Review documentation for accuracy and completeness
+
+            Custom task type with no template:
+
+            >>> # Custom task falls back to empty subtasks list
+            >>> custom_task = planner.plan_task(
+            ...     task_id="custom-001",
+            ...     description="Perform custom analysis",
+            ...     task_type="custom"
+            ... )
+            >>>
+            >>> print(f"Custom task subtasks: {len(custom_task.subtasks)}")
+            >>> print(f"Status: {custom_task.status.value}")
+            Custom task subtasks: 0
+            Status: created
+
+            Inspecting task structure:
+
+            >>> # Examine the complete task structure
+            >>> task = planner.plan_task(
+            ...     task_id="task-002",
+            ...     description="Optimize database queries",
+            ...     task_type="feature_implementation"
+            ... )
+            >>>
+            >>> print(f"Task ID: {task.task_id}")
+            >>> print(f"Description: {task.description}")
+            >>> print(f"Status: {task.status.value}")
+            >>> print(f"Created at: {task.created_at}")
+            >>> print(f"Assigned agents: {task.assigned_agents}")
+            >>>
+            >>> # Each subtask has role, description, and context
+            >>> subtask = task.subtasks[0]
+            >>> print(f"\nFirst subtask:")
+            >>> print(f"  Role: {subtask['role']}")
+            >>> print(f"  Description: {subtask['description']}")
+            >>> print(f"  Context: {subtask['context']}")
+            Task ID: task-002
+            Description: Optimize database queries
+            Status: created
+            Created at: 2025-01-15 10:30:00
+            Assigned agents: []
+
+            First subtask:
+              Role: AgentRole.ANALYST
+              Description: Research requirements and analyze existing codebase: Optimize...
+              Context: Optimize database queries
+
+            Task lifecycle tracking:
+
+            >>> # Task starts in CREATED status
+            >>> task = planner.plan_task(
+            ...     task_id="task-003",
+            ...     description="Implement caching layer",
+            ...     task_type="feature_implementation"
+            ... )
+            >>>
+            >>> print(f"Initial status: {task.status.value}")
+            >>> print(f"Completed at: {task.completed_at}")
+            >>> print(f"Result: {task.result}")
+            >>>
+            >>> # As workflow executes, these fields get populated:
+            >>> # - status changes to RUNNING, then COMPLETED/FAILED
+            >>> # - assigned_agents list is populated with agent IDs
+            >>> # - completed_at is set when done
+            >>> # - result contains the TaskResult
+            Initial status: created
+            Completed at: None
+            Result: None
+
+            Comparing different task types:
+
+            >>> # Compare templates for different task types
+            >>> task_types = ["feature_implementation", "bug_fix", "code_review", "documentation"]
+            >>>
+            >>> for task_type in task_types:
+            ...     task = planner.plan_task(
+            ...         task_id=f"compare-{task_type}",
+            ...         description="Sample task",
+            ...         task_type=task_type
+            ...     )
+            ...     roles = [s['role'].value for s in task.subtasks]
+            ...     print(f"{task_type}: {' → '.join(roles)}")
+            feature_implementation: analyst → planner → builder → tester → reviewer
+            bug_fix: analyst → planner → builder → tester → reviewer
+            code_review: analyst → planner → reviewer → tester
+            documentation: analyst → planner → documenter → reviewer
+
+            Using task plan in workflow execution:
+
+            >>> from orchestrator.core.orchestrator import Orchestrator
+            >>>
+            >>> # The planner is used internally by orchestrator
+            >>> orchestrator = Orchestrator()
+            >>>
+            >>> # When you call execute(), it uses the planner:
+            >>> # task = planner.plan_task(task_id, description, task_type)
+            >>> # Then passes to executor for agent creation and execution
+            >>>
+            >>> # You can also use the planner directly for analysis:
+            >>> task = planner.plan_task(
+            ...     task_id="analyze-001",
+            ...     description="Add new feature",
+            ...     task_type="feature_implementation"
+            ... )
+            >>> print(f"This task will create {len(task.subtasks)} agents")
+            This task will create 5 agents
         """
         # Get template or create custom plan
         template = self.planning_templates.get(task_type, [])

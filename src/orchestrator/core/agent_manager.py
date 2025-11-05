@@ -53,7 +53,10 @@ class AgentManager:
         permission_mode: str = "bypassPermissions",
     ) -> Agent:
         """
-        Create a new agent.
+        Create a new agent with custom configuration.
+
+        This is the core CREATE operation in the agent lifecycle CRUD pattern.
+        Each agent is independent with its own context, model, and tools.
 
         Args:
             name: Human-readable name for the agent
@@ -69,7 +72,210 @@ class AgentManager:
             permission_mode: Permission mode ("bypassPermissions" or "ask")
 
         Returns:
-            Created Agent instance
+            Created Agent instance with unique ID and configured settings
+
+        Examples:
+            Basic custom agent creation:
+
+            >>> from orchestrator.core.agent_manager import AgentManager
+            >>> from orchestrator.core.types import AgentRole
+            >>>
+            >>> manager = AgentManager(working_directory="/path/to/project")
+            >>>
+            >>> # Create a simple custom agent
+            >>> agent = await manager.create_agent(
+            ...     name="Code Analyzer",
+            ...     role=AgentRole.ANALYST,
+            ...     system_prompt="You analyze code for performance issues."
+            ... )
+            >>>
+            >>> print(f"Created agent: {agent.agent_id}")
+            >>> print(f"Role: {agent.config.role.value}")
+            >>> print(f"Model: {agent.config.model}")
+            Created agent: abc123-def-456-789
+            Role: analyst
+            Model: claude-sonnet-4-5-20250929
+
+            Advanced configuration with specific model and settings:
+
+            >>> # Create agent with Opus model for complex reasoning
+            >>> senior_reviewer = await manager.create_agent(
+            ...     name="Senior Code Reviewer",
+            ...     role=AgentRole.REVIEWER,
+            ...     model="claude-opus-4-20250514",
+            ...     system_prompt='''You are a senior code reviewer with expertise in:
+            ...     - Security vulnerabilities
+            ...     - Performance optimization
+            ...     - Design patterns and architecture
+            ...     - Best practices across Python, Go, and TypeScript
+            ...
+            ...     Provide detailed, actionable feedback.''',
+            ...     max_tokens=16384,  # Larger context for detailed reviews
+            ...     temperature=0.7,    # Lower temperature for consistency
+            ...     metadata={"expertise": "security", "seniority": "senior"}
+            ... )
+            >>>
+            >>> print(f"Reviewer configured with {senior_reviewer.config.max_tokens} tokens")
+            Reviewer configured with 16384 tokens
+
+            Fast agent with Haiku model for simple tasks:
+
+            >>> # Use Haiku for quick, simple tasks to reduce cost
+            >>> quick_analyzer = await manager.create_agent(
+            ...     name="Quick File Scanner",
+            ...     role=AgentRole.ANALYST,
+            ...     model="claude-haiku-4-20250514",
+            ...     system_prompt="Quickly scan files and count lines of code.",
+            ...     max_tokens=4096,
+            ...     temperature=1.0
+            ... )
+            >>>
+            >>> # Haiku is ~20x cheaper and faster for simple tasks
+            >>> print(f"Quick analyzer: {quick_analyzer.config.name}")
+            Quick analyzer: Quick File Scanner
+
+            Tool-restricted agent for security:
+
+            >>> # Create agent with restricted tool access
+            >>> read_only_agent = await manager.create_agent(
+            ...     name="Read-Only Auditor",
+            ...     role=AgentRole.REVIEWER,
+            ...     system_prompt="Review code but never modify files.",
+            ...     allowed_tools=["Read", "Glob", "Grep"],  # No Write or Edit
+            ...     permission_mode="bypassPermissions",
+            ...     metadata={"permissions": "read-only"}
+            ... )
+            >>>
+            >>> # This agent can only read, not write
+            >>> print(f"Allowed tools: {read_only_agent.config.allowed_tools}")
+            Allowed tools: ['Read', 'Glob', 'Grep']
+
+            Agent with custom working directory:
+
+            >>> # Create agent working in specific subdirectory
+            >>> frontend_builder = await manager.create_agent(
+            ...     name="Frontend Builder",
+            ...     role=AgentRole.BUILDER,
+            ...     system_prompt="Build React components following our style guide.",
+            ...     working_directory="/path/to/project/frontend",
+            ...     metadata={"focus": "react", "layer": "frontend"}
+            ... )
+            >>>
+            >>> print(f"Working in: {frontend_builder.config.working_directory}")
+            Working in: /path/to/project/frontend
+
+            Multiple specialized agents for parallel work:
+
+            >>> # Create multiple agents for different tasks
+            >>> agents = []
+            >>>
+            >>> # Backend specialist
+            >>> backend_agent = await manager.create_agent(
+            ...     name="Backend Engineer",
+            ...     role=AgentRole.BUILDER,
+            ...     system_prompt="Expert in Python, FastAPI, and SQLAlchemy.",
+            ...     working_directory="/path/to/project/backend",
+            ...     metadata={"specialty": "backend"}
+            ... )
+            >>> agents.append(backend_agent)
+            >>>
+            >>> # Frontend specialist
+            >>> frontend_agent = await manager.create_agent(
+            ...     name="Frontend Engineer",
+            ...     role=AgentRole.BUILDER,
+            ...     system_prompt="Expert in React, TypeScript, and Tailwind.",
+            ...     working_directory="/path/to/project/frontend",
+            ...     metadata={"specialty": "frontend"}
+            ... )
+            >>> agents.append(frontend_agent)
+            >>>
+            >>> # DevOps specialist
+            >>> devops_agent = await manager.create_agent(
+            ...     name="DevOps Engineer",
+            ...     role=AgentRole.BUILDER,
+            ...     system_prompt="Expert in Docker, K8s, and CI/CD.",
+            ...     working_directory="/path/to/project",
+            ...     metadata={"specialty": "devops"}
+            ... )
+            >>> agents.append(devops_agent)
+            >>>
+            >>> print(f"Created {len(agents)} specialized agents")
+            >>> for agent in agents:
+            ...     print(f"  - {agent.config.name}: {agent.config.metadata['specialty']}")
+            Created 3 specialized agents
+              - Backend Engineer: backend
+              - Frontend Engineer: frontend
+              - DevOps Engineer: devops
+
+            Agent with custom tools configuration:
+
+            >>> # Create agent with specific tools
+            >>> custom_tools = [
+            ...     {
+            ...         "name": "database_query",
+            ...         "description": "Query the database",
+            ...         "parameters": {"query": "string"}
+            ...     }
+            ... ]
+            >>>
+            >>> db_agent = await manager.create_agent(
+            ...     name="Database Agent",
+            ...     role=AgentRole.ANALYST,
+            ...     system_prompt="Analyze database performance and queries.",
+            ...     tools=custom_tools,
+            ...     metadata={"database": "postgresql"}
+            ... )
+            >>>
+            >>> print(f"Agent has {len(db_agent.config.tools)} custom tools")
+            Agent has 1 custom tools
+
+            Temperature settings for different use cases:
+
+            >>> # Low temperature (0.3-0.7) for deterministic tasks
+            >>> code_generator = await manager.create_agent(
+            ...     name="Code Generator",
+            ...     role=AgentRole.BUILDER,
+            ...     system_prompt="Generate boilerplate code following strict patterns.",
+            ...     temperature=0.3,  # Very deterministic
+            ...     metadata={"task": "code-generation"}
+            ... )
+            >>>
+            >>> # High temperature (1.0-1.5) for creative tasks
+            >>> creative_writer = await manager.create_agent(
+            ...     name="Documentation Writer",
+            ...     role=AgentRole.DOCUMENTER,
+            ...     system_prompt="Write engaging, creative documentation.",
+            ...     temperature=1.0,  # More creative
+            ...     metadata={"task": "documentation"}
+            ... )
+            >>>
+            >>> print(f"Generator temp: {code_generator.config.temperature}")
+            >>> print(f"Writer temp: {creative_writer.config.temperature}")
+            Generator temp: 0.3
+            Writer temp: 1.0
+
+            Permission modes:
+
+            >>> # Bypass permissions for autonomous operation
+            >>> autonomous_agent = await manager.create_agent(
+            ...     name="Autonomous Builder",
+            ...     role=AgentRole.BUILDER,
+            ...     system_prompt="Build features autonomously.",
+            ...     permission_mode="bypassPermissions"  # No prompts
+            ... )
+            >>>
+            >>> # Ask permission for supervised operation
+            >>> supervised_agent = await manager.create_agent(
+            ...     name="Supervised Builder",
+            ...     role=AgentRole.BUILDER,
+            ...     system_prompt="Build features with oversight.",
+            ...     permission_mode="ask"  # Ask before actions
+            ... )
+            >>>
+            >>> print(f"Autonomous: {autonomous_agent.config.permission_mode}")
+            >>> print(f"Supervised: {supervised_agent.config.permission_mode}")
+            Autonomous: bypassPermissions
+            Supervised: ask
         """
         agent_id = str(uuid.uuid4())
 

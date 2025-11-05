@@ -119,7 +119,153 @@ class Orchestrator:
             execution_mode: 'sequential' or 'parallel'
 
         Returns:
-            Aggregated TaskResult
+            Aggregated TaskResult containing success status, combined outputs,
+            aggregated metrics (tokens, cost), and list of artifacts produced.
+
+        Examples:
+            Basic feature implementation workflow:
+
+            >>> orchestrator = Orchestrator(working_directory="/path/to/project")
+            >>> await orchestrator.start()
+            >>>
+            >>> # Simple feature implementation - uses predefined workflow template
+            >>> result = await orchestrator.execute(
+            ...     prompt="Add user authentication to the API",
+            ...     task_type="feature_implementation",
+            ...     execution_mode="sequential"
+            ... )
+            >>>
+            >>> # Workflow executed:
+            >>> # 1. Analyst: Research requirements and analyze existing codebase
+            >>> # 2. Planner: Create implementation plan based on analysis
+            >>> # 3. Builder: Implement the feature following the plan
+            >>> # 4. Tester: Write and run tests for the new feature
+            >>> # 5. Reviewer: Review implementation quality
+            >>>
+            >>> print(f"Success: {result.success}")
+            >>> print(f"Total cost: ${result.metrics.total_cost:.4f}")
+            >>> print(f"Files modified: {result.metrics.files_written}")
+            Success: True
+            Total cost: $0.2450
+            Files modified: ['src/auth.py', 'tests/test_auth.py']
+
+            Bug fix workflow with sequential execution:
+
+            >>> # Bug fix - uses specialized template
+            >>> result = await orchestrator.execute(
+            ...     prompt="Fix memory leak in data processing pipeline",
+            ...     task_type="bug_fix",
+            ...     execution_mode="sequential"
+            ... )
+            >>>
+            >>> # Workflow executed:
+            >>> # 1. Analyst: Investigate and analyze the root cause
+            >>> # 2. Planner: Create a fix plan based on root cause
+            >>> # 3. Builder: Implement the fix
+            >>> # 4. Tester: Test the fix and add regression tests
+            >>> # 5. Reviewer: Review that fix resolves the issue
+            >>>
+            >>> if result.success:
+            ...     print(f"Bug fixed! Check {result.artifacts}")
+            Bug fixed! Check ['src/pipeline.py', 'tests/test_pipeline_memory.py']
+
+            Code review workflow:
+
+            >>> result = await orchestrator.execute(
+            ...     prompt="Review the changes in pull request #123",
+            ...     task_type="code_review",
+            ...     execution_mode="sequential"
+            ... )
+            >>>
+            >>> # Workflow executed:
+            >>> # 1. Analyst: Analyze code changes and identify areas to review
+            >>> # 2. Planner: Create review plan with checklist and priorities
+            >>> # 3. Reviewer: Review code for quality, security, best practices
+            >>> # 4. Tester: Verify test coverage is adequate
+            >>>
+            >>> print(result.output)
+            [analyst-uuid]: Analyzed 12 files with 450 lines changed...
+            [planner-uuid]: Review plan created with 5 priority areas...
+            [reviewer-uuid]: Found 3 issues: 2 minor, 1 moderate...
+            [tester-uuid]: Test coverage at 85%, 3 edge cases need tests...
+
+            Parallel execution for independent tasks:
+
+            >>> # Auto-detect task complexity and execute in parallel
+            >>> result = await orchestrator.execute(
+            ...     prompt="Generate comprehensive API documentation",
+            ...     task_type="auto",
+            ...     execution_mode="parallel"
+            ... )
+            >>>
+            >>> # Orchestrator analyzes prompt and creates parallel plan
+            >>> # Multiple agents work simultaneously on different aspects
+            >>> print(f"Execution time: {result.metrics.execution_time_seconds:.1f}s")
+            >>> print(f"Agents used: {len(result.metrics.files_read)} concurrent")
+            Execution time: 45.3s
+            Agents used: 3 concurrent
+
+            Custom workflow with auto task type:
+
+            >>> # Let orchestrator determine optimal workflow
+            >>> result = await orchestrator.execute(
+            ...     prompt="Analyze the codebase and create a refactoring plan "
+            ...            "to improve performance in the database layer",
+            ...     task_type="auto",
+            ...     execution_mode="sequential"
+            ... )
+            >>>
+            >>> # Orchestrator analyzes keywords and suggests roles:
+            >>> # - "analyze" → Analyst
+            >>> # - "plan" → Planner
+            >>> # Creates custom workflow based on complexity estimation
+            >>>
+            >>> # Access detailed metrics
+            >>> metrics = result.metrics
+            >>> print(f"Total tokens: {metrics.total_tokens:,}")
+            >>> print(f"Cached tokens: {metrics.cache_read_input_tokens:,}")
+            >>> print(f"Tool calls: {metrics.tool_calls}")
+            Total tokens: 125,430
+            Cached tokens: 42,150
+            Tool calls: 28
+
+            Error handling:
+
+            >>> try:
+            ...     result = await orchestrator.execute(
+            ...         prompt="Impossible task that will fail",
+            ...         task_type="feature_implementation"
+            ...     )
+            ... except Exception as e:
+            ...     print(f"Task failed: {e}")
+            ...     # Orchestrator automatically cleans up agents even on failure
+            ...     status = orchestrator.get_status()
+            ...     print(f"Active agents after failure: {status['fleet']['active_agents']}")
+            Task failed: Agent execution error
+            Active agents after failure: 0
+
+            Monitoring and status during execution:
+
+            >>> import asyncio
+            >>>
+            >>> # Start long-running task
+            >>> task = asyncio.create_task(
+            ...     orchestrator.execute(
+            ...         prompt="Migrate database schema to new version",
+            ...         task_type="feature_implementation"
+            ...     )
+            ... )
+            >>>
+            >>> # Check status while running
+            >>> await asyncio.sleep(5)
+            >>> status = orchestrator.get_status()
+            >>> print(f"Active agents: {status['fleet']['active_agents']}")
+            >>> print(f"Current cost: {status['metrics']['total_cost']}")
+            >>>
+            >>> # Wait for completion
+            >>> result = await task
+            Active agents: 2
+            Current cost: $0.0450
         """
         task_id = str(uuid.uuid4())
 
