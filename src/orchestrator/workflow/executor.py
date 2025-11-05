@@ -1,7 +1,7 @@
 """Workflow execution engine."""
 
 import asyncio
-from typing import Dict, List, Any
+from typing import Any, Dict, List, cast
 from orchestrator.core.agent_manager import AgentManager
 from orchestrator.core.types import OrchestratorTask, AgentStatus, TaskResult
 from orchestrator.observability.monitor import AgentMonitor
@@ -22,7 +22,7 @@ class WorkflowExecutor:
         self,
         agent_manager: AgentManager,
         monitor: AgentMonitor,
-    ):
+    ) -> None:
         self.agent_manager = agent_manager
         self.monitor = monitor
 
@@ -107,12 +107,12 @@ class WorkflowExecutor:
         results = await asyncio.gather(*tasks_to_execute, return_exceptions=True)
 
         # Process results and log
-        processed_results = []
+        processed_results: List[TaskResult] = []
         for (agent, subtask), result in zip(agents, results):
             if isinstance(result, Exception):
                 await self.monitor.log_error(agent, str(result))
                 # Create failed result
-                result = TaskResult(
+                task_result = TaskResult(
                     agent_id=agent.agent_id,
                     task_description=subtask["description"],
                     success=False,
@@ -120,10 +120,11 @@ class WorkflowExecutor:
                     error=str(result),
                     metrics=agent.metrics,
                 )
+                processed_results.append(task_result)
             else:
+                # Type narrowing: result is TaskResult here (not BaseException)
                 await self.monitor.log_task_completed(agent, subtask["description"])
-
-            processed_results.append(result)
+                processed_results.append(cast(TaskResult, result))
 
         return processed_results
 

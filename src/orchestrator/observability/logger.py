@@ -18,7 +18,7 @@ class StructuredLogger:
         self,
         log_file: Optional[Path] = None,
         level: int = logging.INFO,
-    ):
+    ) -> None:
         self.logger = logging.getLogger("orchestrator")
         self.logger.setLevel(level)
 

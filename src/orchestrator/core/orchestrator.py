@@ -6,7 +6,7 @@ from typing import Optional, List, Dict, Any
 from pathlib import Path
 
 from orchestrator.core.agent_manager import AgentManager
-from orchestrator.core.types import AgentRole, OrchestratorTask, TaskResult
+from orchestrator.core.types import AgentRole, AgentMetrics, AgentStatus, OrchestratorTask, TaskResult
 from orchestrator.workflow.planner import TaskPlanner
 from orchestrator.workflow.executor import WorkflowExecutor
 from orchestrator.observability.monitor import AgentMonitor
@@ -35,7 +35,7 @@ class Orchestrator:
         db_path: Optional[Path] = None,
         log_path: Optional[Path] = None,
         enable_monitoring: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the orchestrator.
 
@@ -69,7 +69,7 @@ class Orchestrator:
         # State
         self.tasks: Dict[str, OrchestratorTask] = {}
         self.enable_monitoring = enable_monitoring
-        self.monitoring_task: Optional[asyncio.Task] = None
+        self.monitoring_task: Optional[asyncio.Task[None]] = None
 
         self.logger.info("orchestrator_initialized")
 
@@ -167,7 +167,7 @@ class Orchestrator:
             aggregated = self._aggregate_results(results)
 
             # Update task status
-            task.status = aggregated.success
+            task.status = AgentStatus.COMPLETED if aggregated.success else AgentStatus.FAILED
             task.completed_at = aggregated.timestamp
             task.result = aggregated
 
@@ -244,7 +244,7 @@ class Orchestrator:
         # Combine outputs
         outputs = []
         all_artifacts = []
-        total_metrics = None
+        total_metrics: Optional[AgentMetrics] = None
 
         all_success = True
 
@@ -272,6 +272,11 @@ class Orchestrator:
                 total_metrics.files_read.extend(result.metrics.files_read)
                 total_metrics.files_written.extend(result.metrics.files_written)
                 total_metrics.execution_time_seconds += result.metrics.execution_time_seconds
+
+        # If no results, create default metrics
+        if total_metrics is None:
+            from orchestrator.core.types import AgentMetrics
+            total_metrics = AgentMetrics(agent_id="orchestrator")
 
         return TaskResult(
             agent_id="orchestrator",
@@ -324,8 +329,9 @@ class Orchestrator:
     def list_tasks(self) -> List[Dict[str, Any]]:
         """List all tasks."""
         return [
-            self.get_task_status(task_id)
+            status
             for task_id in self.tasks.keys()
+            if (status := self.get_task_status(task_id)) is not None
         ]
 
     def get_agent_details(self, agent_id: str) -> Optional[Dict[str, Any]]:

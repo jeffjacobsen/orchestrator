@@ -1,7 +1,7 @@
 """Real-time agent monitoring."""
 
 import asyncio
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from datetime import datetime, timezone
 
 from orchestrator.core.agent import Agent
@@ -25,10 +25,10 @@ class AgentMonitor:
         self,
         logger: Optional[StructuredLogger] = None,
         metrics: Optional[MetricsCollector] = None,
-    ):
+    ) -> None:
         self.logger = logger or StructuredLogger()
         self.metrics = metrics or MetricsCollector()
-        self.status_callbacks: List[Callable] = []
+        self.status_callbacks: List[Callable[..., Any]] = []
         self.monitoring = False
 
     async def log_agent_created(self, agent: Agent) -> None:
@@ -149,7 +149,7 @@ class AgentMonitor:
         """Stop monitoring."""
         self.monitoring = False
 
-    def get_summary(self) -> Dict:
+    def get_summary(self) -> Dict[str, Any]:
         """Get monitoring summary."""
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -157,6 +157,6 @@ class AgentMonitor:
             "files": self.metrics.get_files_consumed_and_produced(),
         }
 
-    def register_status_callback(self, callback: Callable) -> None:
+    def register_status_callback(self, callback: Callable[..., Any]) -> None:
         """Register a callback for status updates."""
         self.status_callbacks.append(callback)

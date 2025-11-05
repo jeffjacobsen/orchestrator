@@ -14,10 +14,10 @@ class TaskPlanner:
     - Determine optimal task ordering and dependencies
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.planning_templates = self._load_planning_templates()
 
-    def _load_planning_templates(self) -> Dict[str, List[Dict]]:
+    def _load_planning_templates(self) -> Dict[str, List[Dict[str, Any]]]:
         """
         Load planning templates for common task patterns.
 

@@ -39,7 +39,7 @@ class Agent:
         self,
         agent_id: str,
         config: AgentConfig,
-    ):
+    ) -> None:
         self.agent_id = agent_id
         self.config = config
 
@@ -286,7 +286,7 @@ class Agent:
         Returns:
             ClaudeAgentOptions configured from agent config
         """
-        options_dict = {}
+        options_dict: Dict[str, Any] = {}
 
         # Working directory
         if self.config.working_directory:

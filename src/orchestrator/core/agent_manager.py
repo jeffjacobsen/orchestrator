@@ -1,7 +1,7 @@
 """Agent lifecycle management with CRUD operations."""
 
 import uuid
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from orchestrator.core.agent import Agent
 from orchestrator.core.types import AgentConfig, AgentStatus, AgentRole
@@ -23,7 +23,7 @@ class AgentManager:
         self,
         working_directory: Optional[str] = None,
         monitor: Optional[AgentMonitor] = None,
-    ):
+    ) -> None:
         """
         Initialize AgentManager.
 
@@ -46,8 +46,8 @@ class AgentManager:
         system_prompt: str = "",
         max_tokens: int = 8192,
         temperature: float = 1.0,
-        tools: Optional[List[Dict]] = None,
-        metadata: Optional[Dict] = None,
+        tools: Optional[List[Dict[str, Any]]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
         working_directory: Optional[str] = None,
         allowed_tools: Optional[List[str]] = None,
         permission_mode: str = "bypassPermissions",
@@ -331,7 +331,7 @@ Your responsibilities:
         """Get total tokens used across all agents."""
         return sum(agent.metrics.total_tokens for agent in self.agents.values())
 
-    def get_fleet_summary(self) -> Dict:
+    def get_fleet_summary(self) -> Dict[str, Any]:
         """
         Get a summary of the entire agent fleet.
 
