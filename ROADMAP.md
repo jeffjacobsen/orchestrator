@@ -50,7 +50,7 @@ This document tracks planned enhancements and features for the Claude Multi-Agen
 
 ### 🎯 New High-Priority Items (From Dogfooding):
 1. **Context Budget Enforcement** - Prevent runaway token usage
-2. **Progress Bars** - Real-time visibility for long-running agents (confirmed critical during testing)
+2. ✅ **Progress Bars** - Real-time visibility for long-running agents (v0.1.2 - implemented)
 3. **Agent System Prompt Optimization** - Discourage over-analysis, encourage targeted research
 4. **Historical Execution Metrics** - Learn from actual execution times to improve estimates
 5. **Selective Caching Strategy** - Avoid caching expensive glob results
@@ -79,7 +79,7 @@ All core CLI commands implemented and verified:
 - [x] Configuration wizard for first-time setup (`orchestrator init`)
 - [x] `orchestrator clean` - Clean up old agents/tasks
 - [x] `orchestrator cost-report` - Generate cost analysis with multiple formats
-- [ ] Progress bars for long-running operations
+- [x] Progress bars for long-running operations (v0.1.2 - real-time workflow step tracking)
 - [ ] Interactive mode for agent management
 - [ ] `orchestrator export` - Export metrics to CSV/JSON (partial: JSON done, CSV pending)
 - [ ] Tab completion for commands
@@ -405,9 +405,17 @@ Want to contribute? Here's how:
   - Critical context management optimization
   - See [DOGFOODING_ANALYSIS.md](DOGFOODING_ANALYSIS.md) for full details
 
+- **v0.1.2** (2025-11-05) - Progress bars implementation
+  - Real-time progress tracking for agent operations
+  - Visual workflow step indicators (○ → ✓)
+  - Live agent activity monitoring (thinking, tool calls, completion)
+  - Real-time cost and metrics display
+  - Elapsed time tracking
+  - Addresses critical dogfooding finding: lack of visibility during long-running operations
+  - Zero performance impact when disabled
+
 - **v0.2.0** (Planned) - Context & Performance
   - Context budget enforcement
-  - Progress bars for long-running operations
   - Agent system prompt optimization
   - Historical execution metrics
   - Selective caching strategy
@@ -425,7 +433,7 @@ Want to contribute? Here's how:
 
 ---
 
-**Last Updated**: 2025-11-05 (v0.1.1 dogfooding results integrated)
+**Last Updated**: 2025-11-05 (v0.1.2 progress bars implemented)
 **Maintainer**: Core Team
 
 **Remember**: The roadmap is a living document. Priorities shift based on user feedback, technical discoveries, and emerging use cases. Focus on delivering value incrementally.

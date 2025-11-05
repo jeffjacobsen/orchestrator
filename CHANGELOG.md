@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2025-11-05
+
+Progress bars implementation for real-time visibility during agent operations.
+
+### Added
+
+**Progress Tracking System**
+- Real-time progress bars with Rich library for terminal display
+- `ProgressTracker` class with live display updates
+- Visual workflow step indicators showing progression (○ → ✓)
+- Agent activity monitoring (thinking, tool calls, completion)
+- Real-time cost accumulation display
+- Elapsed time tracking
+- Active/completed agent counters
+
+**Infrastructure**
+- Progress callback system in `Agent` class for event reporting
+- Progress callback integration in `WorkflowExecutor` for both sequential and parallel execution
+- Bridge functions connecting agent lifecycle events to progress display
+- `enable_progress_display` parameter in `Orchestrator` class (default: True)
+
+**User Experience**
+- Progress panels show during long-running operations
+- Visual confirmation that work is happening (addresses critical dogfooding finding)
+- No more "black box" execution during 5+ minute agent phases
+- Zero performance impact when disabled
+
+### Changed
+- `Orchestrator.__init__()` now accepts `enable_progress_display` parameter
+- `WorkflowExecutor.__init__()` now accepts optional `ProgressTracker` parameter
+- Workflow execution now extracts and displays step names in progress UI
+
+## [0.1.1] - 2025-11-05
+
+Dogfooding improvements from self-improvement experiment.
+
+### Added
+
+**Type Hints & Documentation**
+- Comprehensive type hints on all public methods (mypy compatible)
+- Google-style docstrings with realistic code examples
+- 47 type hint validation tests
+- 62 docstring validation tests
+
+**Agent File Logging**
+- JSONL format logs for each agent: `prompt.txt`, `text.txt`, `tools.jsonl`, `summary.jsonl`
+- `AgentLogger` class for structured agent-level logging
+- Debugging support for agent conversations
+
+**Smart Workflow Selection**
+- Task complexity estimation based on keywords and word count
+- Simplified workflow templates that skip Analyst for simple tasks
+- 77% context reduction (113K → 26K tokens) for simple tasks
+- Complexity-based template routing
+
+### Changed
+- `TaskPlanner.plan_task()` now uses complexity estimation to select optimal workflow
+- Simple tasks use streamlined 2-step workflows (Builder → Tester)
+- Complex tasks continue to use full 5-step workflows (Analyst → Planner → Builder → Tester → Reviewer)
+
+### Fixed
+- Context management optimization preventing over-analysis
+- Reduced cache read token usage for simple tasks
+
 ## [0.1.0] - 2025-11-05
 
 Initial release of the Claude Multi-Agent Orchestrator system.
@@ -88,6 +152,20 @@ Initial release of the Claude Multi-Agent Orchestrator system.
 
 ## Version History Summary
 
+### v0.1.2 (Released)
+**Focus**: Progress Bars & Real-time Visibility
+- Real-time progress tracking for agent operations
+- Visual workflow step indicators and activity monitoring
+- Cost and time tracking during execution
+- Addresses critical dogfooding finding about visibility
+
+### v0.1.1 (Released)
+**Focus**: Dogfooding Improvements
+- Comprehensive type hints and docstring examples
+- Agent file logging for debugging
+- Smart workflow selection with context optimization
+- 77% context reduction for simple tasks
+
 ### v0.1.0 (Released)
 **Focus**: Initial Release
 - Core orchestrator functionality with Claude Code SDK
@@ -97,10 +175,10 @@ Initial release of the Claude Multi-Agent Orchestrator system.
 
 ### v0.2.0 (Planned)
 **Focus**: Intelligence & Advanced Features
-- Progress bars for long-running operations
 - Interactive mode for agent management
 - CSV export functionality
 - Real-time monitoring commands (watch, logs, kill)
+- Context budget enforcement
 
 ### v0.3.0 (Planned)
 **Focus**: Intelligence Upgrade
@@ -164,4 +242,4 @@ When contributing, please:
 
 ---
 
-**Last Updated**: 2025-11-05
+**Last Updated**: 2025-11-05 (v0.1.2)

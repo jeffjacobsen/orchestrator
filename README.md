@@ -28,6 +28,8 @@ The orchestrator treats agents as **temporary, deletable resources** that serve 
    - **Delete**: Clean up when work is done
 
 3. **Observability** - Comprehensive monitoring and metrics
+   - Real-time progress bars with visual workflow step tracking
+   - Live agent activity monitoring (thinking, tool calls, completion)
    - Real-time performance and cost tracking
    - Files consumed vs produced tracking
    - Agent-level breakdowns with filtering
