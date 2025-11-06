@@ -190,25 +190,75 @@ estimate = await orchestrator.estimate_cost(
 
 ## Phase 5: Advanced Features (Ongoing)
 
-### 🔮 Web UI for Observability Dashboard
+### 🎯 Web UI for Observability Dashboard
+**Status**: 📋 Comprehensive proposal ready (DASHBOARD_PROPOSAL_V2.md)
 **Vision**: Real-time visual monitoring and control
+**Timeline**: 10-15 weeks (2.5-3.5 months) across 5 phases
 
-**Features**:
-- [ ] Live agent status grid
-- [ ] Interactive cost charts and analytics
+**Comprehensive Proposal**: See [DASHBOARD_PROPOSAL_V2.md](DASHBOARD_PROPOSAL_V2.md) for detailed implementation plan
+
+**Phase 1 - Core Dashboard (2-3 weeks)**:
+- [ ] Live agent status grid with real-time updates
+- [ ] Fleet status overview with ANALYST usage tracking
+- [ ] Basic authentication (Bearer token)
+- [ ] Dark/light mode toggle
+- [ ] WebSocket real-time updates
+- [ ] Error handling and recovery
+
+**Phase 2 - Task Management & Workflow Intelligence (2-3 weeks)**:
+- [ ] Smart task execution UI with complexity estimation
+- [ ] Prompt engineering integration (system prompt preview)
+- [ ] Workflow preview (show which agents will be used)
+- [ ] ANALYST inclusion/exclusion with override
 - [ ] Task history and timeline view
-- [ ] Agent conversation viewer
-- [ ] File diff viewer (consumed vs produced)
-- [ ] Manual agent creation/deletion UI
-- [ ] Workflow designer (drag-and-drop)
-- [ ] Cost alerts and budget tracking
-- [ ] Export reports (PDF/CSV)
+- [ ] Live task execution monitoring
 
-**Tech Stack Suggestions**:
-- Frontend: React + TailwindCSS or SvelteKit
-- Backend: FastAPI websockets for real-time updates
-- Charts: Recharts or Chart.js
-- State management: React Query or SWR
+**Phase 3 - Analytics & Cost Management (2-3 weeks)**:
+- [ ] Interactive cost charts and analytics
+- [ ] Cost breakdown by agent/role/task
+- [ ] ANALYST ROI analysis
+- [ ] Intelligent alerts (anomalies, budget, stuck agents)
+- [ ] Budget tracking and projections
+- [ ] Export reports (CSV/JSON/PDF)
+
+**Phase 4 - Advanced Features & Debugging (2-3 weeks)**:
+- [ ] Agent conversation viewer with full history
+- [ ] Agent file logging viewer (JSONL support for v0.1.1 logs)
+- [ ] File diff viewer (consumed vs produced)
+- [ ] Custom agent creation with prompt preview
+- [ ] Visual workflow designer (drag-and-drop)
+- [ ] Agent templating system
+
+**Phase 5 - Production & Polish (2-3 weeks)**:
+- [ ] OAuth2/JWT authentication upgrade
+- [ ] Role-based access control (Admin/Developer/Viewer)
+- [ ] Performance optimizations (virtual scrolling, lazy loading)
+- [ ] Accessibility compliance (WCAG 2.1 AA)
+- [ ] Production deployment setup (Docker, CI/CD)
+- [ ] Comprehensive documentation with video tutorials
+
+**Tech Stack (Approved)**:
+- Frontend: React 18+ with TypeScript, shadcn/ui + TailwindCSS
+- Backend: FastAPI with SQLAlchemy + Alembic (SQLite → PostgreSQL path)
+- Real-time: WebSocket with React Query integration
+- Charts: Recharts
+- State management: React Query + Zustand
+
+**Key Features**:
+- Integration with v0.1.3 ANALYST optimization
+- Prompt engineering system integration (prompts.py)
+- Agent file logging viewer (v0.1.1 JSONL logs)
+- Security from Phase 1 (not deferred)
+- SQLAlchemy database abstraction for future scaling
+- Comprehensive error handling and monitoring
+
+**Performance Targets**:
+- Dashboard load: <2s
+- API response (p95): <500ms
+- WebSocket latency: <100ms
+- Support: 100 active agents, 1000 total in DB
+
+**Next Steps**: Initialize project structure and begin Phase 1 implementation
 
 ### 🔮 Agent Forking (Context Duplication)
 **Use Case**: Create multiple agents from same conversation state
