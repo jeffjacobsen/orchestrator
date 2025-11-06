@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2025-11-05
+
+ANALYST workflow optimization to reduce context usage for simple tasks.
+
+### Changed
+
+**Default Workflow Optimization**
+- Changed default workflow from `[ANALYST, PLANNER, BUILDER]` to `[PLANNER, BUILDER]`
+- ANALYST now only invoked when detailed research is explicitly required
+- Simple, well-defined tasks skip directly to planning phase
+- Complex tasks requiring investigation continue to use full research workflow
+
+**Documentation Updates**
+- Updated WORKFLOW_ORDER.md with clear guidance on when to use/skip ANALYST
+- Added workflow templates for both simple and complex tasks
+- Updated README.md to clarify ANALYST is optional
+- Added detailed "When to Use" and "When to Skip" criteria for ANALYST
+
+### Added
+
+**Workflow Guidance**
+- Simple Feature Implementation template (no research): PLANNER → BUILDER → TESTER → REVIEWER
+- Complex Feature Implementation template (with research): ANALYST → PLANNER → BUILDER → TESTER → REVIEWER
+- Simple Bug Fix template (obvious solution): PLANNER → BUILDER → TESTER → REVIEWER
+- Complex Bug Fix template (investigation required): ANALYST → PLANNER → BUILDER → TESTER → REVIEWER
+
+### Impact
+- Significant context savings for simple, well-defined tasks
+- Improved efficiency without sacrificing quality on complex tasks
+- Better alignment with actual task complexity needs
+- Addresses dogfooding finding about over-analysis of simple tasks
+
 ## [0.1.2] - 2025-11-05
 
 Progress bars implementation for real-time visibility during agent operations.
@@ -242,4 +274,4 @@ When contributing, please:
 
 ---
 
-**Last Updated**: 2025-11-05 (v0.1.2)
+**Last Updated**: 2025-11-05 (v0.1.3)
