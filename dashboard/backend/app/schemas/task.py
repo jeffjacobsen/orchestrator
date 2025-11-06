@@ -27,7 +27,7 @@ class TaskCreate(TaskBase):
         ```
     """
     include_analyst: Optional[str] = Field("auto", description="Include ANALYST: 'yes', 'no', or 'auto'")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    task_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata", alias="metadata")
 
 
 class TaskResponse(TaskBase):
@@ -63,10 +63,11 @@ class TaskResponse(TaskBase):
     result: Optional[str] = Field(None, description="Task result")
     error: Optional[str] = Field(None, description="Error message if failed")
 
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    task_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata", alias="metadata")
 
     class Config:
         from_attributes = True
+        populate_by_name = True  # Allow both 'metadata' and 'task_metadata'
 
 
 class TaskList(BaseModel):

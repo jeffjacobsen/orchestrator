@@ -58,7 +58,7 @@ class Agent(Base):
 
     # Context
     conversation_history = Column(JSON, default=list)
-    metadata = Column(JSON, default=dict)
+    agent_metadata = Column(JSON, default=dict)  # Renamed from 'metadata' (reserved by SQLAlchemy)
 
     def __repr__(self) -> str:
         return f"<Agent(id={self.id}, role={self.role.value}, status={self.status.value})>"

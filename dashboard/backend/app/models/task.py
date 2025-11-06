@@ -55,7 +55,7 @@ class Task(Base):
     error = Column(Text, nullable=True)
 
     # Metadata
-    metadata = Column(JSON, default=dict)
+    task_metadata = Column(JSON, default=dict)  # Renamed from 'metadata' (reserved by SQLAlchemy)
 
     def __repr__(self) -> str:
         return f"<Task(id={self.id}, type={self.task_type.value}, status={self.status.value})>"

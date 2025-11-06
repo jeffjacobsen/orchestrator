@@ -62,10 +62,11 @@ class AgentResponse(AgentBase):
     cache_read_tokens: int = Field(0, description="Cache read tokens")
     total_cost: str = Field("$0.00", description="Total cost")
 
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    agent_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata", alias="metadata")
 
     class Config:
         from_attributes = True
+        populate_by_name = True  # Allow both 'metadata' and 'agent_metadata'
 
 
 class AgentList(BaseModel):

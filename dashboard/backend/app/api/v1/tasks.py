@@ -131,7 +131,7 @@ async def create_task(
         status=TaskStatus.PENDING,
         complexity=complexity,
         include_analyst=task_data.include_analyst,
-        metadata=task_data.metadata,
+        task_metadata=task_data.task_metadata,
     )
 
     db.add(task)
