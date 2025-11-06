@@ -3,7 +3,7 @@ Agent Pydantic schemas for request/response validation.
 """
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from app.models.agent import AgentStatus, AgentRole
 
 
@@ -69,6 +69,18 @@ class AgentResponse(AgentBase):
         "populate_by_name": True,  # Allow both 'metadata' and 'agent_metadata'
         "protected_namespaces": (),  # Disable protected namespace warnings
     }
+
+    @model_validator(mode='before')
+    @classmethod
+    def extract_from_orm(cls, data: Any) -> Any:
+        """Extract data from SQLAlchemy model, excluding internal attributes."""
+        if hasattr(data, '__dict__'):
+            # It's a SQLAlchemy model, extract only our fields
+            return {
+                key: value for key, value in data.__dict__.items()
+                if not key.startswith('_') and key != 'metadata'
+            }
+        return data
 
 
 class AgentList(BaseModel):
