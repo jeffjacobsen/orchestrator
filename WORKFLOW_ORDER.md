@@ -2,10 +2,10 @@
 
 ## Proper Agent Sequence
 
-The orchestrator follows a specific order when spawning specialized agents to ensure proper research, planning, implementation, testing, and review:
+The orchestrator follows a specific order when spawning specialized agents to ensure proper planning, implementation, testing, and review. The ANALYST is only used when detailed research is needed:
 
 ```
-1. ANALYST  → Research & Analysis
+1. ANALYST  → Research & Analysis (only when detailed research is needed)
 2. PLANNER  → Task Planning & Decomposition
 3. BUILDER  → Implementation
 4. TESTER   → Testing & Validation
@@ -14,8 +14,19 @@ The orchestrator follows a specific order when spawning specialized agents to en
 
 ## Why This Order?
 
-### 1. ANALYST (First)
-**Purpose:** Research requirements and analyze existing codebase
+### 1. ANALYST (Optional - Only When Detailed Research Is Needed)
+**Purpose:** Research requirements and analyze existing codebase when detailed investigation is required
+
+**When to Use:**
+- Complex features requiring codebase analysis
+- Bug investigations needing root cause analysis
+- Tasks requiring research of existing patterns and solutions
+- When understanding dependencies and constraints is critical
+
+**When to Skip:**
+- Simple, well-defined tasks
+- Quick fixes with obvious solutions
+- Tasks where the requirements are already clear
 
 **Responsibilities:**
 - Investigate and understand the problem space
@@ -30,7 +41,7 @@ The orchestrator follows a specific order when spawning specialized agents to en
 - "Analyze code changes and identify areas to review"
 - "Research and understand component behavior, APIs, and usage"
 
-### 2. PLANNER (Second)
+### 2. PLANNER (First or Second)
 **Purpose:** Create implementation plans and tasks
 
 **Responsibilities:**
@@ -38,7 +49,7 @@ The orchestrator follows a specific order when spawning specialized agents to en
 - Create clear execution plans with dependencies
 - Estimate effort and identify potential challenges
 - Coordinate between different agent roles
-- Base plans on Analyst's research
+- Base plans on Analyst's research (when Analyst is used)
 
 **Example Tasks:**
 - "Create implementation plan based on analysis"
@@ -46,7 +57,7 @@ The orchestrator follows a specific order when spawning specialized agents to en
 - "Create review plan with checklist and priorities"
 - "Create documentation plan with structure and coverage"
 
-### 3. BUILDER (Third)
+### 3. BUILDER (Second or Third)
 **Purpose:** Implement code following the plan
 
 **Responsibilities:**
@@ -61,7 +72,7 @@ The orchestrator follows a specific order when spawning specialized agents to en
 - "Implement the fix following the plan"
 - "Implement components based on Planner's design"
 
-### 4. TESTER (Fourth)
+### 4. TESTER (Third or Fourth)
 **Purpose:** Write and run tests
 
 **Responsibilities:**
@@ -76,7 +87,7 @@ The orchestrator follows a specific order when spawning specialized agents to en
 - "Test the fix and add regression tests"
 - "Verify test coverage is adequate"
 
-### 5. REVIEWER (Fifth/Final)
+### 5. REVIEWER (Final)
 **Purpose:** Verify code follows the plan and meets quality standards
 
 **Responsibilities:**
@@ -94,7 +105,17 @@ The orchestrator follows a specific order when spawning specialized agents to en
 
 ## Workflow Templates
 
-### Feature Implementation
+### Simple Feature Implementation (No Research Needed)
+```python
+[
+    PLANNER  → "Create implementation plan for the feature",
+    BUILDER  → "Implement the feature following the plan",
+    TESTER   → "Write and run tests for the new feature",
+    REVIEWER → "Review that implementation follows the plan and meets quality standards",
+]
+```
+
+### Complex Feature Implementation (Research Required)
 ```python
 [
     ANALYST  → "Research requirements and analyze existing codebase",
@@ -105,7 +126,17 @@ The orchestrator follows a specific order when spawning specialized agents to en
 ]
 ```
 
-### Bug Fix
+### Simple Bug Fix (Obvious Solution)
+```python
+[
+    PLANNER  → "Create a fix plan for the bug",
+    BUILDER  → "Implement the fix following the plan",
+    TESTER   → "Test the fix and add regression tests",
+    REVIEWER → "Review that the fix follows the plan and resolves the issue",
+]
+```
+
+### Complex Bug Fix (Investigation Required)
 ```python
 [
     ANALYST  → "Investigate and analyze the root cause of the bug",
@@ -138,29 +169,32 @@ The orchestrator follows a specific order when spawning specialized agents to en
 
 ## Key Principles
 
-### 1. Research Before Planning
-The Analyst must gather all necessary information before the Planner can create an effective plan. Planning without research leads to incomplete or incorrect plans.
+### 1. Use Research Only When Needed
+The Analyst should only be used for complex tasks requiring detailed investigation. For simple, well-defined tasks, skip directly to planning. This saves time and reduces unnecessary context usage.
 
-### 2. Plan Before Building
+### 2. Research Before Planning (When Analyst Is Used)
+When detailed research is needed, the Analyst must gather all necessary information before the Planner can create an effective plan. Planning without research leads to incomplete or incorrect plans.
+
+### 3. Plan Before Building
 The Builder needs a clear plan from the Planner to implement correctly. Building without a plan leads to code that may not meet requirements or follow best practices.
 
-### 3. Build Before Testing
+### 4. Build Before Testing
 The Tester needs implemented code to test. Testing validates that the Builder followed the plan correctly.
 
-### 4. Review After Implementation
+### 5. Review After Implementation
 The Reviewer verifies that the entire workflow followed the plan and meets quality standards. This is the final quality gate.
 
-### 5. Sequential Execution
+### 6. Sequential Execution
 Each agent builds on the work of the previous agent. This creates a clear chain of responsibility and ensures quality at each step.
 
 ## Default Behavior
 
 When no specific roles are detected in a prompt, the orchestrator defaults to:
 ```python
-[AgentRole.ANALYST, AgentRole.PLANNER, AgentRole.BUILDER]
+[AgentRole.PLANNER, AgentRole.BUILDER]
 ```
 
-This ensures that even simple tasks benefit from proper research and planning.
+For simple tasks, this provides the necessary planning and implementation without unnecessary research overhead. The Analyst is only included when the task explicitly requires detailed research or investigation.
 
 ## Example Workflow
 
@@ -199,11 +233,12 @@ This ensures that even simple tasks benefit from proper research and planning.
 ## Benefits of This Order
 
 1. **Quality**: Each step builds on validated work from previous steps
-2. **Efficiency**: Less rework because plans are based on proper research
-3. **Traceability**: Clear chain from requirements → plan → implementation → tests → review
-4. **Accountability**: Each agent has a specific role and responsibility
-5. **Consistency**: Standard workflow across all task types
-6. **Best Practices**: Ensures research and planning before implementation
+2. **Efficiency**: Research only when needed reduces context usage and speeds up simple tasks
+3. **Flexibility**: Workflows adapt to task complexity
+4. **Traceability**: Clear chain from requirements → plan → implementation → tests → review
+5. **Accountability**: Each agent has a specific role and responsibility
+6. **Consistency**: Standard workflow across all task types
+7. **Best Practices**: Ensures proper research (when needed) and planning before implementation
 
 ## Anti-Patterns to Avoid
 
@@ -211,7 +246,7 @@ This ensures that even simple tasks benefit from proper research and planning.
 - Results in code that doesn't meet requirements
 - Leads to extensive rework
 
-❌ **Planning before research**
+❌ **Planning before research (when research is needed)**
 - Creates incomplete or incorrect plans
 - Wastes time on invalid approaches
 
@@ -219,17 +254,25 @@ This ensures that even simple tasks benefit from proper research and planning.
 - Misses functional issues that tests would catch
 - Inefficient use of reviewer time
 
-❌ **Skipping the Analyst**
+❌ **Using Analyst for simple tasks**
+- Wastes time and context on unnecessary research
+- Reduces efficiency for straightforward implementations
+
+❌ **Skipping Analyst for complex tasks**
 - Plans are based on assumptions rather than facts
 - Higher likelihood of implementing the wrong solution
 
 ## Summary
 
 The proper agent order ensures:
-1. Work is researched before planning
-2. Plans are created before implementation
+1. Research is only performed when detailed investigation is needed
+2. Plans are created before implementation (with or without prior research)
 3. Code is implemented before testing
 4. Everything is tested before review
 5. Review validates the entire chain
 
-This creates a robust, efficient workflow where each agent's output is validated by the next agent in the sequence.
+This creates a robust, efficient workflow where:
+- Simple tasks can move quickly from planning to implementation
+- Complex tasks benefit from thorough research and analysis
+- Each agent's output is validated by the next agent in the sequence
+- Context usage is optimized by avoiding unnecessary research steps

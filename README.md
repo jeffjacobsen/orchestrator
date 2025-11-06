@@ -483,17 +483,10 @@ For detailed feature plans, priorities, and implementation timelines, see [ROADM
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License
 
 ## Credits
 
-This implementation is inspired by the multi-agent orchestration concepts described in the project documentation, emphasizing:
+This implementation is inspired by concepts described in [Multi-Agent_Orchestration.md](Multi-Agent_Orchestration.md) based on a YouTube video by IndyDevDan:
 
-- Agent specialization and focused contexts
-- CRUD patterns for agent lifecycle management
-- Observability as a first-class concern
-- Scaling compute through intelligent orchestration
-
----
-
-**Remember**: The future of engineering isn't about how fast you can write prompts—it's about how intelligently you can scale your compute through well-orchestrated agent teams.
+[https://www.youtube.com/watch?v=p0mrXfwAbCg](https://www.youtube.com/watch?v=p0mrXfwAbCg)
