@@ -34,6 +34,7 @@ The orchestrator treats agents as **temporary, deletable resources** that serve 
    - Files consumed vs produced tracking
    - Agent-level breakdowns with filtering
    - One-click inspection of any agent's work
+   - **NEW: Web Dashboard** - Real-time visual monitoring (Phase 1 complete)
 
 ### 🔧 Specialized Agent Roles
 
@@ -76,6 +77,20 @@ pip install -e ".[dev]"
 ```
 
 ## Quick Start
+
+### Web Dashboard (New!)
+
+A real-time web dashboard is now available for visual monitoring of your agent fleet:
+
+```bash
+cd dashboard
+docker-compose up -d
+
+# Access dashboard at http://localhost:5173
+# API docs at http://localhost:8000/api/docs
+```
+
+See [dashboard/README.md](dashboard/README.md) for details.
 
 ### CLI Usage
 

@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: orchestrator-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - DATABASE_URL=sqlite+aiosqlite:///./data/orchestrator.db
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - API_KEY=${API_KEY:-dev-api-key-change-in-production}
+      - CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./backend:/app
+      - dashboard-data:/app/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    networks:
+      - orchestrator-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: orchestrator-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_API_KEY=${API_KEY:-dev-api-key-change-in-production}
+      - VITE_WS_URL=ws://localhost:8000/ws
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0
+    restart: unless-stopped
+    networks:
+      - orchestrator-network
+    depends_on:
+      - backend
+
+volumes:
+  dashboard-data:
+    driver: local
+
+networks:
+  orchestrator-network:
+    driver: bridge
