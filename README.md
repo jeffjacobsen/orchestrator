@@ -182,7 +182,7 @@ Understanding these four leverage points for every agent is fundamental to effec
 1. **User gives high-level prompt** to the orchestrator
 2. **Orchestrator thinks** through the work and creates a plan
 3. **Orchestrator spawns specialized agents** in order:
-   - **Analyst** researches and analyzes requirements
+   - **Analyst** researches and analyzes requirements (only when detailed research is needed)
    - **Planner** creates implementation plans and tasks
    - **Builder** implements code following the plan
    - **Tester** writes and runs tests
@@ -192,6 +192,8 @@ Understanding these four leverage points for every agent is fundamental to effec
 6. **Agents pass results** to next agent in pipeline
 7. **Results are observable** showing consumed/produced files
 8. **Orchestrator verifies completion** and deletes temporary agents
+
+**Note**: The ANALYST is only included for complex tasks requiring detailed investigation. Simple, well-defined tasks skip directly to PLANNER to optimize context usage and improve efficiency.
 
 ### Protected Context Windows
 
@@ -286,14 +288,23 @@ for agent in agents:
 
 ## Task Types
 
-The planner includes templates for common workflows:
+The planner includes templates for common workflows. The ANALYST is only included when detailed research is required:
 
+**Simple Tasks** (no research needed):
+- Default workflow: Planner → Builder
+- Quick fixes, straightforward implementations
+
+**Complex Tasks** (research required):
 - `feature_implementation` - Analyst → Planner → Builder → Tester → Reviewer
 - `bug_fix` - Analyst → Planner → Builder → Tester → Reviewer
 - `code_review` - Analyst → Planner → Reviewer → Tester
 - `documentation` - Analyst → Planner → Documenter → Reviewer
+
+**Other Options**:
 - `auto` - Automatically determine based on prompt
 - `custom` - Define your own workflow
+
+See [WORKFLOW_ORDER.md](WORKFLOW_ORDER.md) for detailed guidance on when to use each workflow.
 
 ## Observability Metrics
 
