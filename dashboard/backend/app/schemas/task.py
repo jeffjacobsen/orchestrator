@@ -65,9 +65,11 @@ class TaskResponse(TaskBase):
 
     task_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata", alias="metadata")
 
-    class Config:
-        from_attributes = True
-        populate_by_name = True  # Allow both 'metadata' and 'task_metadata'
+    model_config = {
+        "from_attributes": True,
+        "populate_by_name": True,  # Allow both 'metadata' and 'task_metadata'
+        "protected_namespaces": (),  # Disable protected namespace warnings
+    }
 
 
 class TaskList(BaseModel):

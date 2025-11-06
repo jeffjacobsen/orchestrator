@@ -35,8 +35,8 @@ class ErrorResponse(BaseModel):
     request_id: str = Field(default="", description="Request ID for debugging")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
 
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "code": "AGENT_NOT_FOUND",
                 "message": "Agent with ID abc-123 not found",
@@ -45,3 +45,4 @@ class ErrorResponse(BaseModel):
                 "timestamp": "2025-11-05T12:34:56Z"
             }
         }
+    }
