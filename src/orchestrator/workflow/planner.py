@@ -1,7 +1,13 @@
 """Task decomposition and planning."""
 
-from typing import Dict, List, Any
+import json
+import logging
+from typing import Dict, List, Any, Optional
 from orchestrator.core.types import AgentRole, OrchestratorTask
+from orchestrator.core.agent_manager import AgentManager
+from orchestrator.core.prompts import get_workflow_planner_prompt
+
+logger = logging.getLogger(__name__)
 
 
 class TaskPlanner:
@@ -14,7 +20,23 @@ class TaskPlanner:
     - Determine optimal task ordering and dependencies
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        working_directory: Optional[str] = None,
+        use_ai_planner: bool = True,
+    ) -> None:
+        """
+        Initialize TaskPlanner.
+
+        Args:
+            working_directory: Working directory for planner agents
+            use_ai_planner: If True, use AI PLANNER agent; if False, use template-based planning
+        """
+        self.working_directory = working_directory
+        self.use_ai_planner = use_ai_planner
+        self.agent_manager = AgentManager(working_directory=working_directory)
+
+        # Keep templates as fallback for when AI planner is disabled
         self.planning_templates = self._load_planning_templates()
 
     def _load_planning_templates(self) -> Dict[str, List[Dict[str, Any]]]:
@@ -199,7 +221,7 @@ class TaskPlanner:
 
         return "complex"
 
-    def plan_task(
+    async def plan_task(
         self,
         task_id: str,
         description: str,
@@ -410,6 +432,33 @@ class TaskPlanner:
             >>> print(f"This task will create {len(task.subtasks)} agents")
             This task will create 5 agents
         """
+        # Use AI PLANNER agent or fall back to templates
+        if self.use_ai_planner:
+            try:
+                return await self._plan_with_ai_agent(task_id, description, task_type)
+            except Exception as e:
+                logger.warning(f"AI planner failed, falling back to templates: {e}")
+                return self._plan_with_templates(task_id, description, task_type)
+        else:
+            return self._plan_with_templates(task_id, description, task_type)
+
+    def _plan_with_templates(
+        self,
+        task_id: str,
+        description: str,
+        task_type: str = "custom",
+    ) -> OrchestratorTask:
+        """
+        Create a task plan using predefined templates (legacy approach).
+
+        Args:
+            task_id: Unique identifier for the task
+            description: High-level task description
+            task_type: Type of task
+
+        Returns:
+            OrchestratorTask with template-based subtasks
+        """
         # Estimate task complexity to select appropriate workflow
         complexity = self._estimate_task_complexity(description)
 
@@ -427,7 +476,16 @@ class TaskPlanner:
             template_key = task_type
 
         # Get template or create custom plan
-        template = self.planning_templates.get(template_key, [])
+        template = self.planning_templates.get(template_key, None)
+
+        # If no template found, use a sensible default based on complexity
+        if template is None:
+            logger.warning(f"No template found for task_type='{template_key}', using default workflow")
+            # Default to feature_implementation workflow for custom tasks
+            if complexity == "simple":
+                template = self.planning_templates["simple_implementation"]
+            else:
+                template = self.planning_templates["feature_implementation"]
 
         subtasks = []
         for step in template:
@@ -442,6 +500,174 @@ class TaskPlanner:
             description=description,
             subtasks=subtasks,
         )
+
+    async def _plan_with_ai_agent(
+        self,
+        task_id: str,
+        description: str,
+        task_type: str = "custom",
+    ) -> OrchestratorTask:
+        """
+        Create a task plan using AI WORKFLOW PLANNER agent.
+
+        The PLANNER agent analyzes the task and creates an optimized workflow
+        with scoped instructions and constraints for each agent.
+
+        Args:
+            task_id: Unique identifier for the task
+            description: High-level task description
+            task_type: Type of task (for context)
+
+        Returns:
+            OrchestratorTask with AI-planned subtasks including constraints
+        """
+        logger.info(f"Planning task '{task_id}' with AI PLANNER agent")
+
+        # Build prompt for WORKFLOW PLANNER
+        planner_prompt = f"""Analyze this task and design an optimal workflow:
+
+TASK DESCRIPTION:
+{description}
+
+TASK TYPE: {task_type}
+
+WORKING DIRECTORY: {self.working_directory or 'current directory'}
+
+Based on the task analysis framework in your system prompt, determine:
+1. Task complexity (simple/medium/complex)
+2. Which agents are needed
+3. Specific scope and constraints for each agent
+4. Execution order (sequential/parallel)
+5. Estimated costs
+
+Respond with ONLY valid JSON (no markdown, no explanation)."""
+
+        # Create WORKFLOW PLANNER agent
+        planner_agent = await self.agent_manager.create_agent(
+            name="Workflow Planner",
+            role=AgentRole.PLANNER,
+            system_prompt=get_workflow_planner_prompt(),
+            working_directory=self.working_directory,
+            model="claude-sonnet-4-5-20250929",  # Use Sonnet for planning
+            permission_mode="bypassPermissions",
+            task_id=task_id,  # Pass task_id for log organization
+        )
+
+        # Execute planning
+        result = await planner_agent.execute_task(planner_prompt)
+
+        # Clean up the planner agent
+        await self.agent_manager.delete_agent(planner_agent.agent_id)
+
+        if not result.success:
+            raise RuntimeError(f"PLANNER agent failed: {result.error}")
+
+        # Check if output is empty (potential SDK/timing issue)
+        if not result.output or not result.output.strip():
+            logger.error(f"PLANNER returned empty output despite success=True")
+            logger.error(f"Agent ID: {planner_agent.agent_id}, Metrics: {result.metrics}")
+            raise RuntimeError(
+                f"PLANNER agent succeeded but returned empty output. "
+                f"This may be a transient SDK issue. Please retry. "
+                f"Agent logs: dashboard/backend/agent_logs/{planner_agent.agent_id}_*/"
+            )
+
+        # Parse JSON response
+        try:
+            workflow_plan = self._parse_workflow_plan(result.output)
+        except Exception as e:
+            logger.error(f"Failed to parse PLANNER output: {e}")
+            logger.error(f"Output length: {len(result.output)} characters")
+            logger.debug(f"Raw output (first 500 chars): {result.output[:500]}")
+            raise RuntimeError(f"Invalid workflow plan from PLANNER: {e}")
+
+        # Log the plan for debugging
+        logger.info(f"PLANNER complexity assessment: {workflow_plan['complexity']}")
+        logger.info(f"PLANNER rationale: {workflow_plan['rationale']}")
+        logger.info(f"PLANNER workflow has {len(workflow_plan['workflow'])} steps")
+
+        # Build subtasks from workflow plan
+        subtasks = []
+        for step in workflow_plan["workflow"]:
+            # Convert agent_role string to AgentRole enum
+            try:
+                agent_role = AgentRole[step["agent_role"]]
+            except KeyError:
+                logger.warning(f"Unknown agent role: {step['agent_role']}, skipping")
+                continue
+
+            subtasks.append({
+                "role": agent_role,
+                "description": f"{step['scope']}: {description}",
+                "context": description,
+                "constraints": step.get("constraints", []),
+                "estimated_tokens": step.get("estimated_tokens", 0),
+                "execution_mode": step.get("execution_mode", "sequential"),
+                "depends_on": step.get("depends_on", []),
+            })
+
+        return OrchestratorTask(
+            task_id=task_id,
+            description=description,
+            subtasks=subtasks,
+            metadata={
+                "complexity": workflow_plan["complexity"],
+                "rationale": workflow_plan["rationale"],
+                "estimated_cost": workflow_plan.get("total_estimated_cost", 0),
+                "skip_reasoning": workflow_plan.get("skip_reasoning", ""),
+            },
+        )
+
+    def _parse_workflow_plan(self, output: str) -> Dict[str, Any]:
+        """
+        Parse JSON workflow plan from PLANNER agent output.
+
+        Handles cases where LLM wraps JSON in markdown code blocks.
+
+        Args:
+            output: Raw output from PLANNER agent
+
+        Returns:
+            Parsed workflow plan dictionary
+
+        Raises:
+            ValueError: If JSON is invalid or missing required fields
+        """
+        # Clean up output - remove markdown code fences if present
+        output = output.strip()
+        if output.startswith("```json"):
+            output = output[7:]  # Remove ```json
+        elif output.startswith("```"):
+            output = output[3:]  # Remove ```
+
+        if output.endswith("```"):
+            output = output[:-3]
+
+        output = output.strip()
+
+        # Parse JSON
+        try:
+            plan = json.loads(output)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON from PLANNER: {e}")
+
+        # Validate required fields
+        required_fields = ["complexity", "rationale", "workflow"]
+        for field in required_fields:
+            if field not in plan:
+                raise ValueError(f"Missing required field: {field}")
+
+        # Validate workflow steps
+        if not isinstance(plan["workflow"], list):
+            raise ValueError("workflow must be a list")
+
+        for i, step in enumerate(plan["workflow"]):
+            required_step_fields = ["agent_role", "scope", "constraints", "execution_mode"]
+            for field in required_step_fields:
+                if field not in step:
+                    raise ValueError(f"Step {i} missing required field: {field}")
+
+        return plan
 
     def plan_parallel_tasks(
         self,

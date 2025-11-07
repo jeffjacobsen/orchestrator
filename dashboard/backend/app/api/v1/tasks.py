@@ -290,16 +290,17 @@ async def get_task_planner_logs(
         # Look in the task-specific subdirectory
         task_log_dir = logs_base_dir / task_id
         if task_log_dir.exists():
-            # Find the Workflow_Planner directory in this task's logs
+            # Find the planner directory in this task's logs
+            # Check for both "Workflow_Planner" (old name) and "Planner_Agent" (new name)
             for dir_path in task_log_dir.iterdir():
-                if dir_path.is_dir() and "Workflow_Planner" in dir_path.name:
+                if dir_path.is_dir() and ("Workflow_Planner" in dir_path.name or "Planner_Agent" in dir_path.name):
                     planner_log_dir = dir_path
                     break
         else:
             # Fallback: search all directories (for logs created before task_id structure)
             # This is for backward compatibility with old log structure
             for dir_path in logs_base_dir.iterdir():
-                if dir_path.is_dir() and "Workflow_Planner" in dir_path.name:
+                if dir_path.is_dir() and ("Workflow_Planner" in dir_path.name or "Planner_Agent" in dir_path.name):
                     planner_log_dir = dir_path
                     break
 
