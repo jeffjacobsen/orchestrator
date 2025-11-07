@@ -2,6 +2,8 @@
 Task API endpoints.
 """
 import asyncio
+import logging
+import shutil
 from typing import Optional
 from pathlib import Path
 from datetime import datetime
@@ -18,6 +20,8 @@ from app.schemas.task import TaskResponse, TaskCreate, TaskList
 from app.schemas.common import ErrorResponse
 from app.api.v1.websocket import get_websocket_manager
 from app.services.orchestrator_executor import OrchestratorExecutor
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -237,8 +241,21 @@ async def delete_task(
             detail=f"Task with ID {task_id} not found",
         )
 
+    # Delete task from database (agents will be cascade deleted due to foreign key)
     await db.delete(task)
     await db.commit()
+
+    # Delete associated log files
+    logs_base_dir = Path(__file__).parent.parent.parent.parent / "agent_logs"
+    task_log_dir = logs_base_dir / task_id
+
+    if task_log_dir.exists() and task_log_dir.is_dir():
+        try:
+            shutil.rmtree(task_log_dir)
+            logger.info(f"Deleted logs for task {task_id}")
+        except Exception as e:
+            # Log error but don't fail the deletion
+            logger.error(f"Failed to delete logs for task {task_id}: {e}")
 
     # Broadcast task deletion to WebSocket clients
     manager = get_websocket_manager()
