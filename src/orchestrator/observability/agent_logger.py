@@ -44,7 +44,8 @@ class AgentLogger:
         agent_id: str,
         agent_name: str,
         log_dir: str = "./agent_logs",
-        enabled: bool = True
+        enabled: bool = True,
+        task_id: Optional[str] = None
     ):
         """
         Initialize agent logger.
@@ -54,18 +55,28 @@ class AgentLogger:
             agent_name: Human-readable agent name
             log_dir: Base directory for all logs
             enabled: Whether logging is enabled
+            task_id: Optional task ID to include in log directory name
         """
         self.agent_id = agent_id
         self.agent_name = agent_name
         self.enabled = enabled
+        self.task_id = task_id
 
         if not self.enabled:
             return
 
-        # Create log directory structure: agent_logs/{agent_id}_{name}_{timestamp}/
+        # Create log directory structure: agent_logs/{task_id}/{agent_id}_{name}_{timestamp}/
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         safe_name = agent_name.replace(" ", "_").replace("/", "_")
-        self.log_subdir = Path(log_dir) / f"{agent_id[:8]}_{safe_name}_{timestamp}"
+
+        # Include task_id in directory path if provided
+        if task_id:
+            task_dir = Path(log_dir) / task_id
+            task_dir.mkdir(parents=True, exist_ok=True)
+            self.log_subdir = task_dir / f"{agent_id[:8]}_{safe_name}_{timestamp}"
+        else:
+            self.log_subdir = Path(log_dir) / f"{agent_id[:8]}_{safe_name}_{timestamp}"
+
         self.log_subdir.mkdir(parents=True, exist_ok=True)
 
         # File paths

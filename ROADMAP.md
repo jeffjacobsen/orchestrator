@@ -191,27 +191,45 @@ estimate = await orchestrator.estimate_cost(
 ## Phase 5: Advanced Features (Ongoing)
 
 ### 🎯 Web UI for Observability Dashboard
-**Status**: 📋 Comprehensive proposal ready (DASHBOARD_PROPOSAL_V2.md)
+**Status**: ✅ Phase 1 Complete | 🚧 Phase 2 In Progress (55%)
 **Vision**: Real-time visual monitoring and control
 **Timeline**: 10-15 weeks (2.5-3.5 months) across 5 phases
+**Started**: 2025-11-05 | **Phase 1 Completed**: 2025-11-06 | **Phase 2 Progress**: 2025-11-06
 
-**Comprehensive Proposal**: See [DASHBOARD_PROPOSAL_V2.md](DASHBOARD_PROPOSAL_V2.md) for detailed implementation plan
+**Detailed Specs**: See [docs/archive/PHASE1_SUMMARY.md](docs/archive/PHASE1_SUMMARY.md) and [docs/archive/DASHBOARD_PROPOSAL_V2.md](docs/archive/DASHBOARD_PROPOSAL_V2.md) for comprehensive implementation details
 
-**Phase 1 - Core Dashboard (2-3 weeks)**:
-- [ ] Live agent status grid with real-time updates
-- [ ] Fleet status overview with ANALYST usage tracking
-- [ ] Basic authentication (Bearer token)
-- [ ] Dark/light mode toggle
-- [ ] WebSocket real-time updates
-- [ ] Error handling and recovery
+**Phase 1 - Core Dashboard ✅ COMPLETED (2025-11-06)**:
+- [x] Live agent status grid with real-time updates
+- [x] Fleet status overview with agent list
+- [x] Basic authentication (Bearer token)
+- [x] Dark/light mode toggle (persisted to localStorage)
+- [x] WebSocket real-time updates (agent lifecycle events)
+- [x] Error handling and recovery (Error Boundaries, toast notifications)
+- [x] Docker Compose setup for development
+- [x] Task creation and deletion UI
+- [x] FastAPI + SQLAlchemy + Alembic backend
+- [x] React 18 + TypeScript + Vite frontend
 
-**Phase 2 - Task Management & Workflow Intelligence (2-3 weeks)**:
-- [ ] Smart task execution UI with complexity estimation
+**Phase 2 - Task Management & Workflow Intelligence 🚧 IN PROGRESS (55%)**:
+- [x] Task execution UI with task type selector
+- [x] Background task execution with FastAPI BackgroundTasks
+- [x] Real-time progress tracking (DashboardProgressTracker)
+- [x] Agent creation events via WebSocket
+- [x] Agent status updates (IDLE → ACTIVE → COMPLETED/FAILED)
+- [x] Workflow display (shows agent roles)
+- [x] Orchestrator integration (TaskPlanner, WorkflowExecutor)
+- [x] Task status monitoring (PENDING → IN_PROGRESS → COMPLETED)
+- [x] **Working directory selection with validation** (2025-11-06)
+- [x] **Task type auto-detection from description** (2025-11-06)
+- [x] **Task complexity estimation** (simple vs complex) (2025-11-06)
+- [x] **Workflow preview** (task-type and complexity aware) (2025-11-06)
+- [x] **ANALYST inclusion controls** (auto/yes/no with preview) (2025-11-06)
+- [x] **Agent Summary Panel** (aggregate stats dashboard) (2025-11-06)
+- [ ] Workflow step progress indicators in UI
 - [ ] Prompt engineering integration (system prompt preview)
-- [ ] Workflow preview (show which agents will be used)
-- [ ] ANALYST inclusion/exclusion with override
-- [ ] Task history and timeline view
-- [ ] Live task execution monitoring
+- [ ] Task history filtering and search
+- [ ] Live task execution view with detailed progress
+- [ ] Task details page with per-agent breakdown
 
 **Phase 3 - Analytics & Cost Management (2-3 weeks)**:
 - [ ] Interactive cost charts and analytics
@@ -258,7 +276,66 @@ estimate = await orchestrator.estimate_cost(
 - WebSocket latency: <100ms
 - Support: 100 active agents, 1000 total in DB
 
-**Next Steps**: Initialize project structure and begin Phase 1 implementation
+**New Feature Ideas (From Implementation Experience)**:
+
+Based on Phase 1-2 implementation, the following enhancements are being considered:
+
+1. **Agent Summary & Cleanup** (Phase 3)
+   - Summarize agent details within task card
+   - Hide/collapse completed agent cards
+   - "Show agents" toggle for completed tasks
+   - Priority: Medium
+
+2. **File Change Tracking** (Phase 4)
+   - Track files read/created/modified/deleted
+   - Display file count badges
+   - Diff viewer for modified files
+   - Priority: High
+   - Requires: Orchestrator file operation tracking
+
+3. **Agent Log Analysis** (Phase 4)
+   - Interactive viewer for v0.1.1 JSONL logs
+   - Timeline view of tool calls
+   - Filter and search logs
+   - Priority: High
+   - Requires: None (logs already exist)
+
+4. **Working Directory Selection** ✅ COMPLETED (2025-11-06)
+   - [x] Per-task working directory configuration
+   - [x] Validate directory exists and is accessible
+   - [x] Clear error messages for invalid directories
+   - [ ] Recent directories dropdown (future enhancement)
+   - Priority: Medium → High (completed early)
+
+5. **Git Integration** (Phase 4-5)
+   - Create branch/worktree before task
+   - Auto-commit agent changes
+   - Create pull request from dashboard
+   - Priority: Medium
+   - Requires: New orchestrator git module
+
+6. **Task Archiving** (Phase 3)
+   - Auto-archive completed tasks
+   - "Show archived" toggle
+   - Restore archived tasks
+   - Priority: Low
+   - Requires: None (pure dashboard feature)
+
+**Quick Wins Completed (2025-11-06)**:
+- ✅ Task type auto-detection with keyword matching
+- ✅ Agent Summary Panel with aggregate statistics (token usage, cost, status breakdown)
+- ✅ Working directory selection with validation
+- ✅ Task complexity estimation (simple vs complex)
+- ✅ Workflow preview (task-type and complexity aware)
+- ✅ ANALYST inclusion controls with auto-detection
+
+**Implementation Priority** (Updated 2025-11-06):
+- High: Agent log viewer, file change tracking, task filtering & search
+- Medium: Agent summary & cleanup, workflow step progress indicators, git integration
+- Low: Task archiving
+- ✅ Completed: Working directory selection, task type auto-detection, agent summary panel
+
+**Next Steps**: Continue Phase 2 with task filtering/search, then agent log viewer (Phase 4)
 
 ### 🔮 Agent Forking (Context Duplication)
 **Use Case**: Create multiple agents from same conversation state
@@ -474,13 +551,30 @@ Want to contribute? Here's how:
   - Improved efficiency without sacrificing quality on complex tasks
   - Updated documentation: WORKFLOW_ORDER.md with optional ANALYST usage
 
-- **v0.2.0** (Planned) - Context & Performance
+- **v0.1.4** (2025-11-06) - Dashboard Phase 1 & Phase 2 Progress
+  - ✅ Dashboard Phase 1: Complete full-stack implementation
+    - FastAPI + SQLAlchemy + Alembic backend
+    - React 18 + TypeScript + Vite frontend
+    - WebSocket real-time updates
+    - Bearer token authentication
+    - Docker Compose development setup
+  - 🚧 Dashboard Phase 2: Real-time progress tracking (40% complete)
+    - DashboardProgressTracker integration with orchestrator
+    - Agent lifecycle events via WebSocket
+    - Background task execution with proper async session management
+    - Task management UI (create, execute, delete)
+    - Orchestrator integration (TaskPlanner, WorkflowExecutor)
+  - New feature ideas documented (agent logs, file tracking, git integration)
+
+- **v0.2.0** (Planned) - Dashboard Phase 2 Complete + Context & Performance
+  - Complete remaining Phase 2 dashboard features
   - Context budget enforcement
   - Agent system prompt optimization
   - Historical execution metrics
   - Selective caching strategy
 
-- **v0.3.0** (Planned) - Intelligence Upgrade
+- **v0.3.0** (Planned) - Dashboard Phase 3 + Intelligence Upgrade
+  - Cost analytics and budgeting dashboard
   - LLM-based task planning
   - Smart agent selection
   - Learning system
@@ -488,12 +582,12 @@ Want to contribute? Here's how:
 - **v1.0.0** (Planned) - Production Ready
   - Comprehensive tests
   - Production deployment guides
-  - Web UI
-  - Enterprise features
+  - Dashboard Phases 4-5 complete
+  - Enterprise features (OAuth2, RBAC)
 
 ---
 
-**Last Updated**: 2025-11-05 (v0.1.3 ANALYST optimization implemented)
+**Last Updated**: 2025-11-06 (v0.1.4 Dashboard Phase 1 complete, Phase 2 in progress)
 **Maintainer**: Core Team
 
 **Remember**: The roadmap is a living document. Priorities shift based on user feedback, technical discoveries, and emerging use cases. Focus on delivering value incrementally.

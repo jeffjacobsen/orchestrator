@@ -6,6 +6,7 @@ from orchestrator.core.agent_manager import AgentManager
 from orchestrator.core.types import OrchestratorTask, AgentStatus, TaskResult
 from orchestrator.observability.monitor import AgentMonitor
 from orchestrator.observability.progress import ProgressTracker
+from orchestrator.workflow.context_parser import extract_structured_output, AgentContext
 
 
 class WorkflowExecutor:
@@ -28,6 +29,8 @@ class WorkflowExecutor:
         self.agent_manager = agent_manager
         self.monitor = monitor
         self.progress_tracker = progress_tracker
+        # Store agent contexts for non-sequential passing and feedback loops
+        self.agent_contexts: Dict[str, AgentContext] = {}
 
     async def execute_sequential(
         self,
@@ -299,13 +302,13 @@ class WorkflowExecutor:
               - Output passing: Yes (agent 2 sees agent 1 output)
         """
         results = []
-        previous_output = None
+        previous_context: Optional[AgentContext] = None
 
         for i, subtask in enumerate(task.subtasks):
             # Create progress callback for this agent
             def make_progress_callback(agent_id: str, agent_name: str, agent_role: str):
                 """Create a progress callback for an agent."""
-                def progress_callback(event: str, data: str) -> None:
+                async def progress_callback(event: str, data: str) -> None:
                     if not self.progress_tracker:
                         return
 
@@ -328,6 +331,8 @@ class WorkflowExecutor:
             agent = await self.agent_manager.create_specialized_agent(
                 role=subtask["role"],
                 task_context=subtask.get("context", ""),
+                constraints=subtask.get("constraints", []),
+                task_id=task.task_id,
             )
 
             # Set up progress callback
@@ -340,10 +345,13 @@ class WorkflowExecutor:
 
             task.assigned_agents.append(agent.agent_id)
 
-            # Build task prompt, including previous output if available
+            # Build task prompt, including previous context if available
             task_prompt = subtask["description"]
-            if previous_output:
-                task_prompt += f"\n\nPrevious agent output:\n{previous_output}"
+            if previous_context:
+                # Pass minimal forward context instead of full output
+                forward_context = previous_context.get_forward_context()
+                if forward_context:
+                    task_prompt += f"\n\n{forward_context}"
 
             # Execute task
             result = await agent.execute_task(task_prompt)
@@ -356,8 +364,19 @@ class WorkflowExecutor:
             if self.progress_tracker:
                 self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
 
-            # Pass output to next agent
-            previous_output = result.output
+            # Extract structured context from agent output
+            if result.success and result.output:
+                agent_context = extract_structured_output(
+                    result.output,
+                    subtask["role"].value
+                )
+                # Store for potential feedback loops or non-sequential access
+                self.agent_contexts[agent.agent_id] = agent_context
+                # Pass to next agent
+                previous_context = agent_context
+            else:
+                # On failure, clear context
+                previous_context = None
 
             # Cleanup if specified (default: keep until workflow complete)
             # This demonstrates the CRUD pattern - agents are temporary
@@ -743,7 +762,7 @@ class WorkflowExecutor:
         # Create progress callback function
         def make_progress_callback(agent_id: str, agent_name: str, agent_role: str):
             """Create a progress callback for an agent."""
-            def progress_callback(event: str, data: str) -> None:
+            async def progress_callback(event: str, data: str) -> None:
                 if not self.progress_tracker:
                     return
 
@@ -768,6 +787,8 @@ class WorkflowExecutor:
             agent = await self.agent_manager.create_specialized_agent(
                 role=subtask["role"],
                 task_context=subtask.get("context", ""),
+                constraints=subtask.get("constraints", []),
+                task_id=task.task_id,
             )
 
             # Set up progress callback
@@ -832,6 +853,7 @@ class WorkflowExecutor:
             List of results in execution order
         """
         results: Dict[int, TaskResult] = {}
+        contexts: Dict[int, AgentContext] = {}
         completed = set()
 
         async def execute_subtask(index: int) -> TaskResult:
@@ -842,26 +864,40 @@ class WorkflowExecutor:
             while not all(d in completed for d in deps):
                 await asyncio.sleep(0.1)
 
-            # Gather outputs from dependencies
-            dep_outputs = [results[d].output for d in deps if d in results]
+            # Gather structured contexts from dependencies
+            dep_contexts = []
+            for dep_idx in deps:
+                if dep_idx in contexts:
+                    dep_contexts.append(contexts[dep_idx].get_forward_context())
 
             # Create agent
             agent = await self.agent_manager.create_specialized_agent(
                 role=subtask["role"],
                 task_context=subtask.get("context", ""),
+                constraints=subtask.get("constraints", []),
+                task_id=task.task_id,
             )
             task.assigned_agents.append(agent.agent_id)
 
-            # Build prompt with dependency outputs
+            # Build prompt with dependency contexts (not full outputs)
             task_prompt = subtask["description"]
-            if dep_outputs:
-                task_prompt += "\n\nInputs from previous tasks:\n"
-                task_prompt += "\n\n".join(dep_outputs)
+            if dep_contexts:
+                task_prompt += "\n\nContext from previous tasks:\n"
+                task_prompt += "\n\n".join(dep_contexts)
 
             # Execute
             result = await agent.execute_task(task_prompt)
             results[index] = result
             completed.add(index)
+
+            # Extract structured context
+            if result.success and result.output:
+                agent_context = extract_structured_output(
+                    result.output,
+                    subtask["role"].value
+                )
+                contexts[index] = agent_context
+                self.agent_contexts[agent.agent_id] = agent_context
 
             await self.monitor.log_task_completed(agent, subtask["description"])
 
