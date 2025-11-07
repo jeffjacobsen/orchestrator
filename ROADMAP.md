@@ -94,6 +94,42 @@ All core CLI commands implemented and verified:
 
 ## Phase 3: Intelligence Upgrade (3-5 days)
 
+### ✅ Agent Role Optimization (Completed 2025-11-06)
+**Problem Identified**: Dashboard testing revealed agents over-engineering simple tasks
+**Impact**: TESTER using 6x more tokens than BUILDER (159K vs 26K) for trivial tasks
+
+**Completed Improvements**:
+1. **✅ TESTER Scope Reduction** (v0.1.3 - COMPLETED)
+   - [x] Added complexity awareness to AI Workflow Planner
+   - [x] Planner now scopes TESTER based on task complexity
+   - [x] Simple tasks: "Write 2-3 basic tests for happy path + 1 edge case. NO comprehensive suite"
+   - [x] Complex tasks: Full test coverage with comprehensive edge cases
+   - **Actual Impact**: Integrated into workflow planning, scope enforced via agent constraints
+
+2. **✅ Workflow Skip Logic Extension** (v0.1.3 - COMPLETED)
+   - [x] Skip ANALYST for simple tasks (v0.1.1)
+   - [x] AI Workflow Planner intelligently selects agents based on complexity
+   - [x] Simple tasks: Builder + Tester only (2 agents)
+   - [x] Complex tasks: Full workflow (Analyst → Planner → Builder → Tester → Reviewer)
+   - **Actual Impact**: Smart agent selection reduces unnecessary invocations
+
+3. **✅ Context-Aware Agent Communication** (v0.1.3 - COMPLETED)
+   - [x] Implemented structured context parsing (context_parser.py)
+   - [x] AgentContext dataclass extracts summaries, file manifests, key findings
+   - [x] Minimal forward context passed between agents instead of full output
+   - [x] Used in all execution modes (sequential, parallel, dependency-based)
+   - **Actual Impact**: Significant context reduction validated in testing
+
+**Implementation Strategy**:
+```python
+class AgentTaskScoper:
+    def scope_testing_task(self, task_complexity: str, code_changes: int) -> str:
+        if task_complexity == "simple" and code_changes < 50:
+            return "Write minimal tests to verify core functionality only"
+        else:
+            return "Write comprehensive test suite with edge cases"
+```
+
 ### 🎯 Advanced Task Planning
 **Current State**: Uses template-based planning with smart workflow selection (v0.1.1)
 
@@ -210,7 +246,7 @@ estimate = await orchestrator.estimate_cost(
 - [x] FastAPI + SQLAlchemy + Alembic backend
 - [x] React 18 + TypeScript + Vite frontend
 
-**Phase 2 - Task Management & Workflow Intelligence 🚧 IN PROGRESS (55%)**:
+**Phase 2 - Task Management & Workflow Intelligence ✅ COMPLETED (2025-11-06)**:
 - [x] Task execution UI with task type selector
 - [x] Background task execution with FastAPI BackgroundTasks
 - [x] Real-time progress tracking (DashboardProgressTracker)
@@ -225,13 +261,29 @@ estimate = await orchestrator.estimate_cost(
 - [x] **Workflow preview** (task-type and complexity aware) (2025-11-06)
 - [x] **ANALYST inclusion controls** (auto/yes/no with preview) (2025-11-06)
 - [x] **Agent Summary Panel** (aggregate stats dashboard) (2025-11-06)
-- [ ] Workflow step progress indicators in UI
-- [ ] Prompt engineering integration (system prompt preview)
-- [ ] Task history filtering and search
-- [ ] Live task execution view with detailed progress
-- [ ] Task details page with per-agent breakdown
+- [x] **Workflow step progress indicators** with visual UI (2025-11-06)
+- [x] **Live task execution view** with detailed workflow progress (2025-11-06)
+- [x] **Real-time agent status transitions** via WebSocket (2025-11-06)
+- [x] **Async callback fixes** for progress tracking (2025-11-06)
+- [ ] Prompt engineering integration (system prompt preview) - **Deferred to Phase 3**
+- [ ] Task history filtering and search - **Deferred to Phase 3**
+- [ ] Task details page with per-agent breakdown - **Deferred to Phase 3**
+
+**🔴 Critical Findings from Testing (2025-11-06)**:
+1. ✅ **DOCUMENTER Role Missing** - Fixed enum synchronization between orchestrator and dashboard
+2. ✅ **Agent Status Not Real-Time** - Fixed by updating status immediately in agent_completed callback
+3. ✅ **Async Callback Bug** - Fixed missing await in executor.py (lines 357, 813)
+4. ✅ **Context Parsing** - Validated working correctly (BUILDER received condensed summary from ANALYST)
+5. ✅ **PLANNER Empty Output** - Added diagnostics, monitoring for recurrence (likely transient SDK issue)
+6. ⚠️ **TESTER Over-Engineering** - For simple tasks, TESTER uses 6x more tokens than BUILDER (159K vs 26K)
+7. ⚠️ **Agent Stats Delayed** - Stats only appear after final agent completes (not real-time per agent)
+8. 🎯 **Inefficient Workflows** - ANALYST → PLANNER → DOCUMENTER wastes context; should be ANALYST → DOCUMENTER
+
+**See**: [tests/ORCHESTRATOR_WORKFLOW_ANALYSIS.md](tests/ORCHESTRATOR_WORKFLOW_ANALYSIS.md) for detailed analysis
 
 **Phase 3 - Analytics & Cost Management (2-3 weeks)**:
+- [ ] **Per-agent metrics in workflow progress** - Show cost/tokens for completed agents inline
+- [ ] **Clickable agent names with log viewer** - Modal dialog showing prompt.txt and text.txt
 - [ ] Interactive cost charts and analytics
 - [ ] Cost breakdown by agent/role/task
 - [ ] ANALYST ROI analysis
