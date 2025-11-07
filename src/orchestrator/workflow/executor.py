@@ -1,6 +1,7 @@
 """Workflow execution engine."""
 
 import asyncio
+import inspect
 from typing import Any, Callable, Dict, List, Optional, cast
 from orchestrator.core.agent_manager import AgentManager
 from orchestrator.core.types import OrchestratorTask, AgentStatus, TaskResult
@@ -312,18 +313,24 @@ class WorkflowExecutor:
                     if not self.progress_tracker:
                         return
 
+                    # Helper to call method and await if it's a coroutine
+                    async def call_method(method, *args):
+                        result = method(*args)
+                        if inspect.iscoroutine(result):
+                            await result
+
                     if event == "started":
-                        self.progress_tracker.agent_created(agent_id, agent_name, agent_role)
-                        self.progress_tracker.agent_started(agent_id)
+                        await call_method(self.progress_tracker.agent_created, agent_id, agent_name, agent_role)
+                        await call_method(self.progress_tracker.agent_started, agent_id)
                     elif event == "thinking":
-                        self.progress_tracker.thinking(agent_id)
+                        await call_method(self.progress_tracker.thinking, agent_id)
                     elif event == "tool_call":
-                        self.progress_tracker.tool_call(agent_id, data)
+                        await call_method(self.progress_tracker.tool_call, agent_id, data)
                     elif event == "completed":
                         # Will update with cost after task completes
                         pass
                     elif event == "failed":
-                        self.progress_tracker.agent_failed(agent_id, data)
+                        await call_method(self.progress_tracker.agent_failed, agent_id, data)
 
                 return progress_callback
 
@@ -362,7 +369,9 @@ class WorkflowExecutor:
 
             # Update progress tracker with completion and cost
             if self.progress_tracker:
-                self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
+                tracker_result = self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
+                if inspect.iscoroutine(tracker_result):
+                    await tracker_result
 
             # Extract structured context from agent output
             if result.success and result.output:
@@ -766,18 +775,24 @@ class WorkflowExecutor:
                 if not self.progress_tracker:
                     return
 
+                # Helper to call method and await if it's a coroutine
+                async def call_method(method, *args):
+                    result = method(*args)
+                    if inspect.iscoroutine(result):
+                        await result
+
                 if event == "started":
-                    self.progress_tracker.agent_created(agent_id, agent_name, agent_role)
-                    self.progress_tracker.agent_started(agent_id)
+                    await call_method(self.progress_tracker.agent_created, agent_id, agent_name, agent_role)
+                    await call_method(self.progress_tracker.agent_started, agent_id)
                 elif event == "thinking":
-                    self.progress_tracker.thinking(agent_id)
+                    await call_method(self.progress_tracker.thinking, agent_id)
                 elif event == "tool_call":
-                    self.progress_tracker.tool_call(agent_id, data)
+                    await call_method(self.progress_tracker.tool_call, agent_id, data)
                 elif event == "completed":
                     # Will update with cost after task completes
                     pass
                 elif event == "failed":
-                    self.progress_tracker.agent_failed(agent_id, data)
+                    await call_method(self.progress_tracker.agent_failed, agent_id, data)
 
             return progress_callback
 
@@ -831,7 +846,9 @@ class WorkflowExecutor:
 
                 # Update progress tracker with completion and cost
                 if self.progress_tracker:
-                    self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
+                    tracker_result = self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
+                    if inspect.iscoroutine(tracker_result):
+                        await tracker_result
 
                 processed_results.append(cast(TaskResult, result))
 
