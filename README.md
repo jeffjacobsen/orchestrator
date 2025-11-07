@@ -2,6 +2,9 @@
 
 A powerful Python framework for orchestrating multiple Claude agents with CRUD operations, intelligent task decomposition, and comprehensive observability.
 
+**Current Version**: v0.1.5 (2025-11-07)
+**Status**: ✅ Stable - Dashboard Phase 2 Complete + Core Optimizations Validated
+
 ## Overview
 
 The Multi-Agent Orchestrator implements a new paradigm for agentic engineering: **the rate at which you create and command agents becomes your engineering constraint**. This system enables you to scale compute and impact by deploying specialized agent teams that work in parallel.
@@ -34,7 +37,7 @@ The orchestrator treats agents as **temporary, deletable resources** that serve 
    - Files consumed vs produced tracking
    - Agent-level breakdowns with filtering
    - One-click inspection of any agent's work
-   - **NEW: Web Dashboard** - Real-time visual monitoring (Phase 1 complete)
+   - **NEW: Web Dashboard** - Real-time visual monitoring with agent logs (Phase 2 complete)
 
 ### 🔧 Specialized Agent Roles
 
@@ -78,9 +81,19 @@ pip install -e ".[dev]"
 
 ## Quick Start
 
-### Web Dashboard (New!)
+### Web Dashboard (v0.1.5 - Phase 2 Complete)
 
-A real-time web dashboard is now available for visual monitoring of your agent fleet:
+A full-featured real-time web dashboard for visual monitoring and control of your agent fleet:
+
+**Features**:
+- ✅ Real-time workflow progress with per-agent metrics
+- ✅ Agent log viewer (click agent names to view prompt.txt and text.txt)
+- ✅ Cost and token tracking inline with workflow steps
+- ✅ Task execution with working directory selection
+- ✅ Complexity estimation and ANALYST controls
+- ✅ WebSocket live updates for agent status transitions
+- ✅ Dark/light mode with localStorage persistence
+- ✅ Task deletion with automatic log cleanup
 
 ```bash
 cd dashboard
@@ -90,7 +103,12 @@ docker-compose up -d
 # API docs at http://localhost:8000/api/docs
 ```
 
-See [dashboard/README.md](dashboard/README.md) for details.
+**Quick Start**:
+1. Dashboard will create a demo Bearer token on first run
+2. Copy token from backend logs to frontend
+3. Start executing tasks and watch them in real-time
+
+See [dashboard/README.md](dashboard/README.md) for complete setup guide.
 
 ### CLI Usage
 
