@@ -2,11 +2,69 @@
 
 This document tracks planned enhancements and features for the Claude Multi-Agent Orchestrator system.
 
+**Current Status**: 2025-11-07
+- ✅ **Dashboard Phase 2: COMPLETE** - Real-time monitoring and workflow tracking fully functional
+- ✅ **Core Optimizations: COMPLETE** - AI Workflow Planner, context parsing, and smart agent selection implemented
+- ✅ **Log Organization: COMPLETE** - Task-based directory structure with automatic cleanup
+- 🎯 **Next Focus**: Dashboard Phase 3 (Analytics & Insights)
+
 ## Status Legend
 - 🎯 **High Priority** - Should be implemented soon
 - 💡 **Medium Priority** - Good to have, implement when ready
 - 🔮 **Future** - Long-term goals, nice to have
 - ✅ **Completed** - Already implemented
+
+---
+
+## Executive Summary
+
+### Recent Achievements (2025-11-06 to 2025-11-07)
+
+**Dashboard Phase 2 Features ✅**:
+- Real-time workflow progress indicators with per-agent metrics
+- Agent status transitions via WebSocket (IDLE → ACTIVE → COMPLETED)
+- Visual step-by-step tracking with clickable agent logs
+- Cost and token display inline with workflow steps
+- Planner log viewing with task-based organization
+- Task deletion with automatic log cleanup
+- Agent log viewer modal (prompt.txt and text.txt display)
+
+**Core Orchestrator Optimizations ✅**:
+- AI Workflow Planner with complexity-aware agent selection
+- Context parsing and structured agent communication (context_parser.py)
+- Smart workflow skip logic (simple tasks use minimal agents)
+- TESTER scope reduction based on task complexity
+- All features validated and working in production
+
+**Log Architecture Improvements ✅**:
+- Task-based log organization: `agent_logs/{task_id}/{agent_id}_{name}_{timestamp}/`
+- Automatic log cleanup when tasks are deleted
+- Migration script for existing logs (migrate_logs.py)
+- Backward compatibility for old log structure
+
+### Success Metrics
+
+**Baseline (Before Optimizations)**:
+- Simple function task: 185K tokens, $0.21, ~2 minutes
+- TESTER using 6x more tokens than BUILDER (159K vs 26K)
+
+**Current (After Optimizations)**:
+- AI Planner intelligently selects agents based on complexity
+- Context parsing reduces token usage significantly
+- TESTER scope tailored to task complexity
+
+**Target Goals**:
+- Simple function task: 56-66K tokens, $0.06-0.07 (65% cost reduction)
+- Estimated savings: $140 per 1000 simple tasks
+
+### Known Issues & Fixes
+
+**✅ Fixed Issues (2025-11-06 to 2025-11-07)**:
+1. **PLANNER Empty Output** - Added diagnostics (planner.py:564-572), monitoring for recurrence
+2. **Context Parsing** - Validated working correctly (BUILDER received condensed 120-line summary from ANALYST's 606K tokens)
+3. **Async/Sync Progress Tracker** - Fixed with inspect.iscoroutine() for compatibility
+4. **Task Deletion Cleanup** - Logs now automatically deleted with tasks
+5. **Planner Log Organization** - Now uses task_id directory structure
 
 ---
 
@@ -246,7 +304,7 @@ estimate = await orchestrator.estimate_cost(
 - [x] FastAPI + SQLAlchemy + Alembic backend
 - [x] React 18 + TypeScript + Vite frontend
 
-**Phase 2 - Task Management & Workflow Intelligence ✅ COMPLETED (2025-11-06)**:
+**Phase 2 - Task Management & Workflow Intelligence ✅ COMPLETED (2025-11-07)**:
 - [x] Task execution UI with task type selector
 - [x] Background task execution with FastAPI BackgroundTasks
 - [x] Real-time progress tracking (DashboardProgressTracker)
@@ -265,31 +323,52 @@ estimate = await orchestrator.estimate_cost(
 - [x] **Live task execution view** with detailed workflow progress (2025-11-06)
 - [x] **Real-time agent status transitions** via WebSocket (2025-11-06)
 - [x] **Async callback fixes** for progress tracking (2025-11-06)
+- [x] **Agent log viewer with clickable agent names** (2025-11-07)
+- [x] **Per-agent cost and token metrics in workflow progress** (2025-11-07)
+- [x] **Task-based log organization** with automatic cleanup (2025-11-07)
+- [x] **Planner log viewing** in task details (2025-11-07)
 - [ ] Prompt engineering integration (system prompt preview) - **Deferred to Phase 3**
 - [ ] Task history filtering and search - **Deferred to Phase 3**
-- [ ] Task details page with per-agent breakdown - **Deferred to Phase 3**
 
-**🔴 Critical Findings from Testing (2025-11-06)**:
+**🔴 Critical Findings from Testing (2025-11-06 to 2025-11-07)**:
 1. ✅ **DOCUMENTER Role Missing** - Fixed enum synchronization between orchestrator and dashboard
 2. ✅ **Agent Status Not Real-Time** - Fixed by updating status immediately in agent_completed callback
-3. ✅ **Async Callback Bug** - Fixed missing await in executor.py (lines 357, 813)
+3. ✅ **Async Callback Bug** - Fixed with inspect.iscoroutine() for sync/async compatibility
 4. ✅ **Context Parsing** - Validated working correctly (BUILDER received condensed summary from ANALYST)
 5. ✅ **PLANNER Empty Output** - Added diagnostics, monitoring for recurrence (likely transient SDK issue)
-6. ⚠️ **TESTER Over-Engineering** - For simple tasks, TESTER uses 6x more tokens than BUILDER (159K vs 26K)
-7. ⚠️ **Agent Stats Delayed** - Stats only appear after final agent completes (not real-time per agent)
-8. 🎯 **Inefficient Workflows** - ANALYST → PLANNER → DOCUMENTER wastes context; should be ANALYST → DOCUMENTER
+6. ✅ **TESTER Over-Engineering** - Fixed with complexity-aware scoping via AI Workflow Planner
+7. ✅ **Agent Stats Delayed** - Fixed with per-agent metrics in workflow progress
+8. ✅ **Inefficient Workflows** - Fixed with AI Workflow Planner selecting agents based on complexity
 
 **See**: [tests/ORCHESTRATOR_WORKFLOW_ANALYSIS.md](tests/ORCHESTRATOR_WORKFLOW_ANALYSIS.md) for detailed analysis
 
-**Phase 3 - Analytics & Cost Management (2-3 weeks)**:
-- [ ] **Per-agent metrics in workflow progress** - Show cost/tokens for completed agents inline
-- [ ] **Clickable agent names with log viewer** - Modal dialog showing prompt.txt and text.txt
-- [ ] Interactive cost charts and analytics
-- [ ] Cost breakdown by agent/role/task
-- [ ] ANALYST ROI analysis
+**Phase 3 - Analytics & Cost Management (2-3 weeks)** 🎯 NEXT PRIORITY:
+- [ ] Interactive cost charts and analytics (trends over time)
+- [ ] Task history with searchable logs and filtering
+- [ ] Cost breakdown by agent type/role/task
+- [ ] ANALYST ROI analysis (cost vs value comparison)
 - [ ] Intelligent alerts (anomalies, budget, stuck agents)
 - [ ] Budget tracking and projections
 - [ ] Export reports (CSV/JSON/PDF)
+- [ ] Performance metrics dashboard (avg execution time, success rates)
+
+**Recommended Phase 3 Implementation Order**:
+1. **Task History & Search** (Week 1) - Foundation for all analytics
+   - Searchable task history with filters (date range, status, cost range)
+   - Full-text search across task descriptions
+   - Sort by cost, duration, created_at
+
+2. **Cost Analytics Dashboard** (Week 2) - Visualization and insights
+   - Line charts for cost/token trends over time
+   - Bar charts for cost breakdown by agent role
+   - Pie charts for task type distribution
+   - Cost per task type averages
+
+3. **Alerts & Budget System** (Week 3) - Proactive monitoring
+   - Budget limits with alerts
+   - Anomaly detection (tasks costing >2x average)
+   - Stuck agent detection (taking >5x expected time)
+   - Daily/weekly cost summary emails
 
 **Phase 4 - Advanced Features & Debugging (2-3 weeks)**:
 - [ ] Agent conversation viewer with full history
@@ -330,64 +409,52 @@ estimate = await orchestrator.estimate_cost(
 
 **New Feature Ideas (From Implementation Experience)**:
 
-Based on Phase 1-2 implementation, the following enhancements are being considered:
+Based on Phase 1-2 implementation, the following enhancements have been identified:
 
-1. **Agent Summary & Cleanup** (Phase 3)
-   - Summarize agent details within task card
-   - Hide/collapse completed agent cards
-   - "Show agents" toggle for completed tasks
-   - Priority: Medium
+**✅ Completed Features (2025-11-06 to 2025-11-07)**:
+- ✅ Working directory selection with validation
+- ✅ Task type auto-detection with keyword matching
+- ✅ Agent Summary Panel with aggregate statistics
+- ✅ Task complexity estimation (simple vs complex)
+- ✅ Workflow preview (task-type and complexity aware)
+- ✅ ANALYST inclusion controls with auto-detection
+- ✅ Workflow step progress indicators with visual UI
+- ✅ Agent log viewer with clickable agent names (prompt.txt and text.txt)
+- ✅ Per-agent cost and token metrics inline in workflow progress
+- ✅ Task-based log organization with automatic cleanup
+
+**Future Enhancements**:
+
+1. **Task Archiving** (Phase 3)
+   - Auto-archive completed tasks (>30 days old)
+   - "Show archived" toggle
+   - Restore archived tasks
+   - Priority: Low
 
 2. **File Change Tracking** (Phase 4)
-   - Track files read/created/modified/deleted
-   - Display file count badges
+   - Track files read/created/modified/deleted per agent
+   - Display file count badges in workflow progress
    - Diff viewer for modified files
    - Priority: High
    - Requires: Orchestrator file operation tracking
 
 3. **Agent Log Analysis** (Phase 4)
-   - Interactive viewer for v0.1.1 JSONL logs
+   - Interactive viewer for v0.1.1 JSONL logs (tools.jsonl, summary.jsonl)
    - Timeline view of tool calls
    - Filter and search logs
-   - Priority: High
+   - Priority: Medium
    - Requires: None (logs already exist)
 
-4. **Working Directory Selection** ✅ COMPLETED (2025-11-06)
-   - [x] Per-task working directory configuration
-   - [x] Validate directory exists and is accessible
-   - [x] Clear error messages for invalid directories
-   - [ ] Recent directories dropdown (future enhancement)
-   - Priority: Medium → High (completed early)
-
-5. **Git Integration** (Phase 4-5)
+4. **Git Integration** (Phase 4-5)
    - Create branch/worktree before task
    - Auto-commit agent changes
    - Create pull request from dashboard
    - Priority: Medium
    - Requires: New orchestrator git module
 
-6. **Task Archiving** (Phase 3)
-   - Auto-archive completed tasks
-   - "Show archived" toggle
-   - Restore archived tasks
+5. **Recent Directories Dropdown** (Phase 3)
+   - Quick access to frequently used working directories
    - Priority: Low
-   - Requires: None (pure dashboard feature)
-
-**Quick Wins Completed (2025-11-06)**:
-- ✅ Task type auto-detection with keyword matching
-- ✅ Agent Summary Panel with aggregate statistics (token usage, cost, status breakdown)
-- ✅ Working directory selection with validation
-- ✅ Task complexity estimation (simple vs complex)
-- ✅ Workflow preview (task-type and complexity aware)
-- ✅ ANALYST inclusion controls with auto-detection
-
-**Implementation Priority** (Updated 2025-11-06):
-- High: Agent log viewer, file change tracking, task filtering & search
-- Medium: Agent summary & cleanup, workflow step progress indicators, git integration
-- Low: Task archiving
-- ✅ Completed: Working directory selection, task type auto-detection, agent summary panel
-
-**Next Steps**: Continue Phase 2 with task filtering/search, then agent log viewer (Phase 4)
 
 ### 🔮 Agent Forking (Context Duplication)
 **Use Case**: Create multiple agents from same conversation state
@@ -603,43 +670,94 @@ Want to contribute? Here's how:
   - Improved efficiency without sacrificing quality on complex tasks
   - Updated documentation: WORKFLOW_ORDER.md with optional ANALYST usage
 
-- **v0.1.4** (2025-11-06) - Dashboard Phase 1 & Phase 2 Progress
+- **v0.1.4** (2025-11-06) - Dashboard Phase 1 Complete
   - ✅ Dashboard Phase 1: Complete full-stack implementation
     - FastAPI + SQLAlchemy + Alembic backend
     - React 18 + TypeScript + Vite frontend
     - WebSocket real-time updates
     - Bearer token authentication
     - Docker Compose development setup
-  - 🚧 Dashboard Phase 2: Real-time progress tracking (40% complete)
+  - 🚧 Dashboard Phase 2: Started (40% complete)
     - DashboardProgressTracker integration with orchestrator
     - Agent lifecycle events via WebSocket
     - Background task execution with proper async session management
     - Task management UI (create, execute, delete)
     - Orchestrator integration (TaskPlanner, WorkflowExecutor)
-  - New feature ideas documented (agent logs, file tracking, git integration)
 
-- **v0.2.0** (Planned) - Dashboard Phase 2 Complete + Context & Performance
-  - Complete remaining Phase 2 dashboard features
+- **v0.1.5** (2025-11-07) - Dashboard Phase 2 Complete + Log Organization
+  - ✅ Dashboard Phase 2: COMPLETE
+    - Agent log viewer with clickable agent names (modal with prompt.txt/text.txt)
+    - Per-agent cost and token metrics inline in workflow progress
+    - Real-time agent status transitions (IDLE → ACTIVE → COMPLETED)
+    - Planner log viewing in task details
+    - Async/sync progress tracker compatibility (inspect.iscoroutine())
+  - ✅ Task-based Log Organization:
+    - New structure: `agent_logs/{task_id}/{agent_id}_{name}_{timestamp}/`
+    - Automatic log cleanup when tasks are deleted
+    - Migration script for existing logs (migrate_logs.py)
+    - Backward compatibility for old flat structure
+  - ✅ All Core Optimizations Validated:
+    - AI Workflow Planner with complexity-aware agent selection
+    - Context parsing (context_parser.py) reducing token usage
+    - TESTER scope reduction based on task complexity
+    - Smart workflow skip logic (simple tasks use minimal agents)
+  - Bug fixes: PLANNER empty output diagnostics, agent status updates, log directory organization
+
+- **v0.2.0** (Planned) - Dashboard Phase 3 + Advanced Analytics
+  - Task history with searchable logs and filtering
+  - Interactive cost charts (trends, breakdowns, comparisons)
+  - Budget tracking and alerts
+  - Performance metrics dashboard
+  - Export reports (CSV/JSON/PDF)
   - Context budget enforcement
-  - Agent system prompt optimization
-  - Historical execution metrics
-  - Selective caching strategy
+  - Historical execution metrics database
 
-- **v0.3.0** (Planned) - Dashboard Phase 3 + Intelligence Upgrade
-  - Cost analytics and budgeting dashboard
-  - LLM-based task planning
-  - Smart agent selection
-  - Learning system
+- **v0.3.0** (Planned) - Dashboard Phase 4 + Intelligence Upgrade
+  - Agent conversation viewer with full message history
+  - Agent JSONL log viewer (tools.jsonl, summary.jsonl)
+  - File change tracking and diff viewer
+  - Custom agent creation with prompt preview
+  - LLM-based task planning improvements
+  - Learning system (historical success patterns)
 
 - **v1.0.0** (Planned) - Production Ready
-  - Comprehensive tests
+  - Comprehensive test suite (>80% coverage)
   - Production deployment guides
-  - Dashboard Phases 4-5 complete
-  - Enterprise features (OAuth2, RBAC)
+  - Dashboard Phase 5 complete
+  - Enterprise features (OAuth2, RBAC, SSO)
+  - Performance optimizations
+  - Comprehensive documentation with tutorials
 
 ---
 
-**Last Updated**: 2025-11-06 (v0.1.4 Dashboard Phase 1 complete, Phase 2 in progress)
+## What's Next? (2025-11-07)
+
+With Dashboard Phase 2 and core optimizations complete, the recommended focus areas are:
+
+### Immediate Priority: Dashboard Phase 3 (Analytics & Insights)
+The foundation is now solid. Next step is adding visibility into historical data:
+- Task history with search and filters
+- Cost trend visualizations
+- Budget tracking and alerts
+- Performance metrics over time
+
+**Why this matters**: Current dashboard shows real-time data beautifully, but lacks historical analysis. Teams need to understand patterns, trends, and optimize spending over time.
+
+### Secondary Priorities:
+1. **Multi-Task Workflow Support** - Queue system, task dependencies, batch execution
+2. **Agent Learning & Optimization** - Use historical data to improve planning
+3. **Enhanced Error Handling** - Better recovery, retry logic, validation
+4. **File Change Tracking** - See what each agent actually modified
+
+### Long-term Vision:
+- Self-improving orchestrator that learns from past executions
+- Proactive cost optimization suggestions
+- Agent templates marketplace
+- Git/GitHub deep integration
+
+---
+
+**Last Updated**: 2025-11-07 (v0.1.5 - Dashboard Phase 2 complete, core optimizations validated)
 **Maintainer**: Core Team
 
 **Remember**: The roadmap is a living document. Priorities shift based on user feedback, technical discoveries, and emerging use cases. Focus on delivering value incrementally.
