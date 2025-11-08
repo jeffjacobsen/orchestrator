@@ -10,7 +10,7 @@ from fastapi.exceptions import RequestValidationError
 
 from app.core.config import settings
 from app.core.database import init_db
-from app.api.v1 import agents, tasks
+from app.api.v1 import agents, tasks, websocket
 from app.schemas.common import ErrorResponse
 
 # Configure logging
@@ -120,6 +120,7 @@ async def readiness_check():
 # Include API routers
 app.include_router(agents.router, prefix="/api/v1")
 app.include_router(tasks.router, prefix="/api/v1")
+app.include_router(websocket.router, prefix="/api/v1")
 
 
 # Root endpoint

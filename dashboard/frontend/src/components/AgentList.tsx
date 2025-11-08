@@ -7,7 +7,7 @@ export function AgentList() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['agents'],
     queryFn: () => agentApi.list(),
-    refetchInterval: 5000, // Refetch every 5 seconds
+    // No polling needed - WebSocket provides real-time updates
   })
 
   if (isLoading) {

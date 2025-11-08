@@ -64,7 +64,10 @@ class Orchestrator:
             working_directory=working_directory,
             monitor=self.monitor,
         )
-        self.planner = TaskPlanner()
+        self.planner = TaskPlanner(
+            working_directory=working_directory,
+            use_ai_planner=True,  # Enable AI PLANNER agent by default
+        )
         self.executor = WorkflowExecutor(
             agent_manager=self.agent_manager,
             monitor=self.monitor,
@@ -293,7 +296,7 @@ class Orchestrator:
                 agent_roles=suggested_roles,
             )
         else:
-            task = self.planner.plan_task(
+            task = await self.planner.plan_task(
                 task_id=task_id,
                 description=prompt,
                 task_type=task_type,

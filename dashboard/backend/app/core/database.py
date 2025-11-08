@@ -19,6 +19,9 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
+# Export as async_session_maker for background tasks
+async_session_maker = AsyncSessionLocal
+
 # Create declarative base for models
 Base = declarative_base()
 

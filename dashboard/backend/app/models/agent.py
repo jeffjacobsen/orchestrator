@@ -23,6 +23,7 @@ class AgentRole(str, enum.Enum):
     BUILDER = "BUILDER"
     TESTER = "TESTER"
     REVIEWER = "REVIEWER"
+    DOCUMENTER = "DOCUMENTER"
     CUSTOM = "CUSTOM"
 
 

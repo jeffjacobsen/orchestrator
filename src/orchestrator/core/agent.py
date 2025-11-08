@@ -63,7 +63,8 @@ class Agent:
         self.logger = AgentLogger(
             agent_id=agent_id,
             agent_name=config.name,
-            enabled=enable_logging
+            enabled=enable_logging,
+            task_id=config.task_id
         )
 
     async def execute_task(self, task_prompt: str) -> TaskResult:
@@ -82,7 +83,7 @@ class Agent:
 
         # Notify progress callback that agent started
         if self.progress_callback:
-            self.progress_callback("started", "")
+            await self.progress_callback("started", "")
 
         try:
             # Log the prompt
@@ -105,13 +106,13 @@ class Agent:
                         elif isinstance(block, ThinkingBlock):
                             # Report thinking activity
                             if self.progress_callback:
-                                self.progress_callback("thinking", "")
+                                await self.progress_callback("thinking", "")
                         elif isinstance(block, ToolUseBlock):
                             # Track tool usage
                             self._track_tool_use(block)
                             # Report tool activity
                             if self.progress_callback:
-                                self.progress_callback("tool_call", block.name)
+                                await self.progress_callback("tool_call", block.name)
                         elif isinstance(block, ToolResultBlock):
                             # Update tool call with result
                             self._track_tool_result(block)
@@ -130,7 +131,7 @@ class Agent:
 
             # Notify progress callback of completion
             if self.progress_callback:
-                self.progress_callback("completed", "")
+                await self.progress_callback("completed", "")
 
             return TaskResult(
                 agent_id=self.agent_id,
@@ -148,7 +149,7 @@ class Agent:
 
             # Notify progress callback of failure
             if self.progress_callback:
-                self.progress_callback("failed", str(e))
+                await self.progress_callback("failed", str(e))
 
             return TaskResult(
                 agent_id=self.agent_id,

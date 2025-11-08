@@ -88,6 +88,13 @@ export const agentApi = {
       method: 'DELETE',
     })
   },
+
+  /**
+   * Get agent logs (prompt and output).
+   */
+  getLogs: async (agentId: string): Promise<{ prompt: string; output: string }> => {
+    return apiRequest(`/api/v1/agents/${agentId}/logs`)
+  },
 }
 
 /**
@@ -125,6 +132,7 @@ export const taskApi = {
     description: string
     task_type: string
     include_analyst?: string
+    working_directory?: string
     metadata?: Record<string, any>
   }): Promise<Task> => {
     return apiRequest('/api/v1/tasks', {
@@ -140,5 +148,12 @@ export const taskApi = {
     await apiRequest(`/api/v1/tasks/${taskId}`, {
       method: 'DELETE',
     })
+  },
+
+  /**
+   * Get workflow planner logs for a task.
+   */
+  getPlannerLogs: async (taskId: string): Promise<{ prompt: string; output: string }> => {
+    return apiRequest(`/api/v1/tasks/${taskId}/planner-logs`)
   },
 }

@@ -77,8 +77,9 @@ class AgentConfig(BaseModel):
     allowed_tools: Optional[List[str]] = None
     permission_mode: str = "bypassPermissions"  # "bypassPermissions" or "ask"
 
-    # Session management
+    # Session and task management
     session_id: Optional[str] = None
+    task_id: Optional[str] = None  # For log organization and context tracking
 
 
 class TaskResult(BaseModel):
@@ -105,3 +106,4 @@ class OrchestratorTask(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
     result: Optional[TaskResult] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)  # Workflow planning metadata

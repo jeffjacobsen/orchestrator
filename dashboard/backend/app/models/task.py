@@ -2,7 +2,7 @@
 Task database model.
 """
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, DateTime, Enum as SQLEnum, JSON, Text
+from sqlalchemy import Column, String, DateTime, Enum as SQLEnum, JSON, Text, Integer
 from app.core.database import Base
 import enum
 
@@ -47,8 +47,10 @@ class Task(Base):
 
     # Workflow configuration
     workflow = Column(JSON, default=list)  # List of agent roles
+    current_step = Column(Integer, nullable=True)  # Current workflow step index (0-based)
     complexity = Column(String, nullable=True)  # "simple" or "complex"
     include_analyst = Column(String, nullable=True)  # "yes", "no", or "auto"
+    working_directory = Column(String, nullable=True)  # Working directory for task execution
 
     # Results
     result = Column(Text, nullable=True)

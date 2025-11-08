@@ -8,6 +8,7 @@ export enum AgentRole {
   BUILDER = 'BUILDER',
   TESTER = 'TESTER',
   REVIEWER = 'REVIEWER',
+  DOCUMENTER = 'DOCUMENTER',
   CUSTOM = 'CUSTOM',
 }
 
@@ -63,8 +64,10 @@ export interface Task {
   updated_at: string
   completed_at?: string | null
   workflow: string[]
+  current_step?: number | null
   complexity?: string | null
   include_analyst?: string | null
+  working_directory?: string | null
   result?: string | null
   error?: string | null
   metadata: Record<string, any>

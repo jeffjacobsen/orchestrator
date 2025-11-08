@@ -22,11 +22,13 @@ class TaskCreate(TaskBase):
         {
             "description": "Add user authentication feature",
             "task_type": "feature_implementation",
-            "include_analyst": "auto"
+            "include_analyst": "auto",
+            "working_directory": "/path/to/project"
         }
         ```
     """
     include_analyst: Optional[str] = Field("auto", description="Include ANALYST: 'yes', 'no', or 'auto'")
+    working_directory: Optional[str] = Field(None, description="Working directory for task execution")
     task_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata", alias="metadata")
 
 
@@ -57,8 +59,10 @@ class TaskResponse(TaskBase):
     completed_at: Optional[datetime] = Field(None, description="Completion timestamp")
 
     workflow: List[str] = Field(default_factory=list, description="List of agent roles in workflow")
+    current_step: Optional[int] = Field(None, description="Current workflow step index (0-based)")
     complexity: Optional[str] = Field(None, description="Task complexity: 'simple' or 'complex'")
     include_analyst: Optional[str] = Field(None, description="ANALYST inclusion setting")
+    working_directory: Optional[str] = Field(None, description="Working directory for task execution")
 
     result: Optional[str] = Field(None, description="Task result")
     error: Optional[str] = Field(None, description="Error message if failed")

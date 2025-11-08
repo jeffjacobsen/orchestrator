@@ -52,6 +52,7 @@ class AgentManager:
         allowed_tools: Optional[List[str]] = None,
         permission_mode: str = "bypassPermissions",
         progress_callback: Optional[Callable[[str, str], None]] = None,
+        task_id: Optional[str] = None,
     ) -> Agent:
         """
         Create a new agent with custom configuration.
@@ -292,6 +293,7 @@ class AgentManager:
             working_directory=working_directory or self.working_directory,
             allowed_tools=allowed_tools,
             permission_mode=permission_mode,
+            task_id=task_id,
         )
 
         agent = Agent(
@@ -312,9 +314,11 @@ class AgentManager:
         self,
         role: AgentRole,
         task_context: str = "",
+        constraints: Optional[List[str]] = None,
         working_directory: Optional[str] = None,
         allowed_tools: Optional[List[str]] = None,
         permission_mode: str = "bypassPermissions",
+        task_id: Optional[str] = None,
     ) -> Agent:
         """
         Create an agent with role-specific configuration.
@@ -322,9 +326,11 @@ class AgentManager:
         Args:
             role: The specialized role
             task_context: Additional context for the agent's system prompt
+            constraints: List of constraints to guide agent behavior (from PLANNER)
             working_directory: Working directory for this agent (overrides manager default)
             allowed_tools: List of allowed tool names for this agent
             permission_mode: Permission mode ("bypassPermissions" or "ask")
+            task_id: Task ID for log organization
 
         Returns:
             Created Agent with role-specific configuration
@@ -390,6 +396,13 @@ Your responsibilities:
             context=task_context if task_context else ""
         )
 
+        # Add constraints from PLANNER if provided
+        if constraints:
+            constraints_text = "\n\nCONSTRAINTS FROM WORKFLOW PLANNER:\n" + "\n".join(
+                f"- {constraint}" for constraint in constraints
+            )
+            system_prompt += constraints_text
+
         return await self.create_agent(
             name=f"{role.value.capitalize()} Agent",
             role=role,
@@ -397,6 +410,7 @@ Your responsibilities:
             working_directory=working_directory,
             allowed_tools=allowed_tools,
             permission_mode=permission_mode,
+            task_id=task_id,
         )
 
     # READ

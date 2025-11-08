@@ -46,6 +46,10 @@ class Settings(BaseSettings):
         default="../../data",
         alias="ORCHESTRATOR_DATA_DIR"
     )
+    orchestrator_working_directory: str = Field(
+        default="../../../../..",  # Points to orchestrator root (5 levels up from app/api/v1/)
+        alias="ORCHESTRATOR_WORKING_DIRECTORY"
+    )
 
     # Logging
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
