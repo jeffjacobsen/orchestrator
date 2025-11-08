@@ -68,6 +68,8 @@ export interface Task {
   complexity?: string | null
   include_analyst?: string | null
   working_directory?: string | null
+  total_cost?: number | null
+  duration_seconds?: number | null
   result?: string | null
   error?: string | null
   metadata: Record<string, any>

@@ -64,6 +64,9 @@ class TaskResponse(TaskBase):
     include_analyst: Optional[str] = Field(None, description="ANALYST inclusion setting")
     working_directory: Optional[str] = Field(None, description="Working directory for task execution")
 
+    total_cost: Optional[int] = Field(None, description="Total cost in cents (USD)")
+    duration_seconds: Optional[int] = Field(None, description="Total execution time in seconds")
+
     result: Optional[str] = Field(None, description="Task result")
     error: Optional[str] = Field(None, description="Error message if failed")
 

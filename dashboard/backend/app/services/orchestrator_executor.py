@@ -6,6 +6,7 @@ allowing tasks to be executed via the API.
 """
 import asyncio
 import logging
+from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -220,7 +221,11 @@ class OrchestratorExecutor:
             logger.info(f"Executing task: {task.id}")
             results = await executor.execute_sequential(orchestrator_task)
 
-            # Update agent records with final metrics
+            # Update agent records with final metrics and aggregate to task
+            total_task_cost_cents = 0
+            total_task_duration = 0
+            task_start_time = task.created_at
+
             for result in results:
                 # Find the agent created by progress tracker
                 agent_result = await self.db.execute(
@@ -241,15 +246,30 @@ class OrchestratorExecutor:
                     output_cost = (agent.total_output_tokens / 1_000_000) * 15
                     agent.total_cost = f"${input_cost + output_cost:.4f}"
 
+                    # Aggregate cost (convert to cents to store as integer)
+                    agent_cost_cents = int((input_cost + output_cost) * 100)
+                    total_task_cost_cents += agent_cost_cents
+
                     await self.db.commit()
                     await self.db.refresh(agent)
 
                     # Broadcast final agent update with metrics
                     await manager.broadcast_agent_update(agent)
 
-            # Mark task as completed
+                # Aggregate duration from result metrics
+                if result.metrics and hasattr(result.metrics, 'execution_time_seconds'):
+                    total_task_duration += int(result.metrics.execution_time_seconds)
+
+            # Calculate total task duration from start to completion
+            task_end_time = datetime.now(timezone.utc)
+            task_duration_from_timestamps = int((task_end_time - task_start_time).total_seconds())
+
+            # Mark task as completed with aggregated metrics
             task.status = TaskStatus.COMPLETED
+            task.completed_at = task_end_time
             task.result = f"Task completed successfully with {len(results)} agents"
+            task.total_cost = total_task_cost_cents  # Store in cents
+            task.duration_seconds = task_duration_from_timestamps  # Use wall clock time
             await self.db.commit()
             await manager.broadcast_task_update(task)
 

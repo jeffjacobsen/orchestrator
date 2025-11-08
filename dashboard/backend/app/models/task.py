@@ -52,6 +52,10 @@ class Task(Base):
     include_analyst = Column(String, nullable=True)  # "yes", "no", or "auto"
     working_directory = Column(String, nullable=True)  # Working directory for task execution
 
+    # Metrics (aggregated from all agents)
+    total_cost = Column(Integer, nullable=True, default=0, index=True)  # Total cost in USD (stored as cents to avoid float issues)
+    duration_seconds = Column(Integer, nullable=True, default=0, index=True)  # Total execution time in seconds
+
     # Results
     result = Column(Text, nullable=True)
     error = Column(Text, nullable=True)

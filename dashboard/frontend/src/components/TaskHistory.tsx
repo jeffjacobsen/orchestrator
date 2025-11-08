@@ -20,6 +20,10 @@ interface TaskHistoryFilters {
   status: string;
   dateFrom: string;
   dateTo: string;
+  costMin: string;
+  costMax: string;
+  durationMin: string;
+  durationMax: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
 }
@@ -32,6 +36,10 @@ export function TaskHistory() {
     status: '',
     dateFrom: '',
     dateTo: '',
+    costMin: '',
+    costMax: '',
+    durationMin: '',
+    durationMax: '',
     sortBy: 'created_at',
     sortOrder: 'desc'
   });
@@ -48,6 +56,10 @@ export function TaskHistory() {
       if (filters.status) params.append('status', filters.status);
       if (filters.dateFrom) params.append('date_from', filters.dateFrom);
       if (filters.dateTo) params.append('date_to', filters.dateTo);
+      if (filters.costMin) params.append('cost_min', filters.costMin);
+      if (filters.costMax) params.append('cost_max', filters.costMax);
+      if (filters.durationMin) params.append('duration_min', filters.durationMin);
+      if (filters.durationMax) params.append('duration_max', filters.durationMax);
       params.append('sort_by', filters.sortBy);
       params.append('sort_order', filters.sortOrder);
 
@@ -84,6 +96,10 @@ export function TaskHistory() {
       status: '',
       dateFrom: '',
       dateTo: '',
+      costMin: '',
+      costMax: '',
+      durationMin: '',
+      durationMax: '',
       sortBy: 'created_at',
       sortOrder: 'desc'
     });
@@ -98,6 +114,19 @@ export function TaskHistory() {
       hour: '2-digit',
       minute: '2-digit'
     }).format(date);
+  };
+
+  const formatCost = (cents: number | null | undefined): string => {
+    if (cents === null || cents === undefined) return 'N/A';
+    return `$${(cents / 100).toFixed(2)}`;
+  };
+
+  const formatDuration = (seconds: number | null | undefined): string => {
+    if (seconds === null || seconds === undefined) return 'N/A';
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
   };
 
   const getStatusBadge = (status: string) => {
@@ -201,6 +230,60 @@ export function TaskHistory() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Cost Min (in cents) */}
+            <div>
+              <label className="text-sm font-medium block mb-2">Min Cost (cents)</label>
+              <input
+                type="number"
+                value={filters.costMin}
+                onChange={(e) => handleFilterChange('costMin', e.target.value)}
+                placeholder="0"
+                min="0"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md"
+              />
+            </div>
+
+            {/* Cost Max (in cents) */}
+            <div>
+              <label className="text-sm font-medium block mb-2">Max Cost (cents)</label>
+              <input
+                type="number"
+                value={filters.costMax}
+                onChange={(e) => handleFilterChange('costMax', e.target.value)}
+                placeholder="No limit"
+                min="0"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md"
+              />
+            </div>
+
+            {/* Duration Min (in seconds) */}
+            <div>
+              <label className="text-sm font-medium block mb-2">Min Duration (sec)</label>
+              <input
+                type="number"
+                value={filters.durationMin}
+                onChange={(e) => handleFilterChange('durationMin', e.target.value)}
+                placeholder="0"
+                min="0"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md"
+              />
+            </div>
+
+            {/* Duration Max (in seconds) */}
+            <div>
+              <label className="text-sm font-medium block mb-2">Max Duration (sec)</label>
+              <input
+                type="number"
+                value={filters.durationMax}
+                onChange={(e) => handleFilterChange('durationMax', e.target.value)}
+                placeholder="No limit"
+                min="0"
+                className="w-full px-3 py-2 bg-background border border-border rounded-md"
+              />
+            </div>
+          </div>
+
           {/* Filter Actions */}
           <div className="flex justify-end gap-2">
             <button
@@ -255,6 +338,18 @@ export function TaskHistory() {
                     <th className="px-4 py-3 text-center text-sm font-medium">
                       Agents
                     </th>
+                    <th
+                      className="px-4 py-3 text-right text-sm font-medium cursor-pointer hover:bg-muted/80"
+                      onClick={() => handleSort('total_cost')}
+                    >
+                      Cost <SortIcon field="total_cost" />
+                    </th>
+                    <th
+                      className="px-4 py-3 text-right text-sm font-medium cursor-pointer hover:bg-muted/80"
+                      onClick={() => handleSort('duration_seconds')}
+                    >
+                      Duration <SortIcon field="duration_seconds" />
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -274,6 +369,12 @@ export function TaskHistory() {
                       </td>
                       <td className="px-4 py-3 text-sm text-center">
                         {task.workflow?.length || 0}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right font-mono">
+                        {formatCost(task.total_cost)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right font-mono">
+                        {formatDuration(task.duration_seconds)}
                       </td>
                     </tr>
                   ))}

@@ -15,6 +15,20 @@ The Multi-Agent Orchestrator implements a new paradigm for agentic engineering: 
 
 The orchestrator treats agents as **temporary, deletable resources** that serve single purposes. Once a job is complete, agents are deleted to free resources. This is the key to managing agents at scale.
 
+### Library-First Design
+
+The orchestrator core (`src/orchestrator/`) is **completely independent** of any specific UI, API, or monitoring system. The sample dashboard is just one way to use it.
+
+**Use the orchestrator with**:
+- The included web dashboard
+- GitHub Issues automation
+- Telegram/Slack bots
+- Your own custom API
+- Message queues (RabbitMQ, Redis, Kafka)
+- Any Python application
+
+See [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) for detailed examples and patterns.
+
 ## Key Features
 
 ### 🎯 The Three Pillars
@@ -78,6 +92,31 @@ pip install -e ".[dev]"
 # Note: Authentication is handled through Claude Code CLI
 # No need to manually configure API keys
 ```
+
+### ⚠️ Important: Database Migration
+
+If you have an existing orchestrator database (from version < 0.1.5), run the migration:
+
+```bash
+cd dashboard/backend
+sqlite3 orchestrator.db < migration_fix.sql
+```
+
+This adds the `total_cost` and `duration_seconds` columns for task metrics.
+
+### 🔒 Security Notice
+
+**IMPORTANT**: This is a development release for early adopters.
+
+Before deploying:
+1. **Change default secrets** in `dashboard/backend/.env`:
+   ```bash
+   SECRET_KEY=your-secure-random-string-here
+   API_KEY=your-secure-api-key-here
+   ```
+2. **Restrict network access** if exposing dashboard publicly
+3. **Review file permissions** - orchestrator can read/write in working directories
+4. **Use authentication** (coming in Phase 5 - RBAC)
 
 ## Quick Start
 
@@ -176,26 +215,31 @@ asyncio.run(main())
 
 ## Architecture
 
+**Key Principle**: The orchestrator core (`src/orchestrator/`) is completely independent of any UI, API, or monitoring system. The dashboard is just one optional way to use it.
+
 ```
 orchestrator/
-├── core/
-│   ├── orchestrator.py      # Main orchestrator class
-│   ├── agent_manager.py     # CRUD operations for agents
-│   ├── agent.py              # Individual agent wrapper
-│   └── types.py              # Type definitions
-├── observability/
-│   ├── monitor.py            # Real-time monitoring
-│   ├── metrics.py            # Metrics collection
-│   └── logger.py             # Structured logging
-├── storage/
-│   ├── database.py           # SQLite persistence
-│   └── models.py             # Database models
-├── workflow/
-│   ├── planner.py            # Task decomposition
-│   └── executor.py           # Workflow execution
-└── cli/
-    └── commands.py           # CLI interface
+├── src/orchestrator/        # Core library (integration-agnostic)
+│   ├── core/
+│   │   ├── orchestrator.py      # Main orchestrator class
+│   │   ├── agent_manager.py     # CRUD operations for agents
+│   │   ├── agent.py              # Individual agent wrapper
+│   │   └── types.py              # Type definitions
+│   ├── observability/
+│   │   ├── monitor.py            # Real-time monitoring
+│   │   ├── metrics.py            # Metrics collection
+│   │   └── agent_logger.py       # Structured logging
+│   ├── workflow/
+│   │   ├── planner.py            # Task decomposition
+│   │   └── executor.py           # Workflow execution
+│   └── cli/
+│       └── commands.py           # CLI interface
+└── dashboard/               # Optional web UI (sample implementation)
+    ├── backend/             # FastAPI backend
+    └── frontend/            # React frontend
 ```
+
+For detailed project structure, architecture layers, and contribution guidelines, see [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md).
 
 ## Core Concepts
 
@@ -524,6 +568,17 @@ Traditional sub-agent patterns (like the Claude Code SDK's `Task` tool) often lo
 ## Roadmap
 
 For detailed feature plans, priorities, and implementation timelines, see [ROADMAP.md](ROADMAP.md).
+
+## Possible Enhancements
+
+For a comprehensive list of potential improvements, future features, and enhancement ideas based on current architecture analysis, see [POSSIBLE_ENHANCEMENTS.md](POSSIBLE_ENHANCEMENTS.md).
+
+This document covers:
+- CLI task database integration
+- Extended Thinking feature enablement
+- Advanced cost and duration visualizations
+- Real-time thinking display
+- And more...
 
 ## License
 

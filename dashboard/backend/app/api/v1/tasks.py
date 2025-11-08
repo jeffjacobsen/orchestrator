@@ -41,7 +41,11 @@ async def list_tasks(
     search: Optional[str] = Query(None, description="Search in task description"),
     date_from: Optional[str] = Query(None, description="Filter from date (ISO format: YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="Filter to date (ISO format: YYYY-MM-DD)"),
-    sort_by: str = Query("created_at", description="Sort field: created_at, updated_at"),
+    cost_min: Optional[int] = Query(None, ge=0, description="Minimum total cost in cents"),
+    cost_max: Optional[int] = Query(None, ge=0, description="Maximum total cost in cents"),
+    duration_min: Optional[int] = Query(None, ge=0, description="Minimum duration in seconds"),
+    duration_max: Optional[int] = Query(None, ge=0, description="Maximum duration in seconds"),
+    sort_by: str = Query("created_at", description="Sort field: created_at, updated_at, total_cost, duration_seconds"),
     sort_order: str = Query("desc", description="Sort order: asc or desc"),
 ) -> TaskList:
     """
@@ -82,12 +86,31 @@ async def list_tasks(
                 detail=f"Invalid date_to format: {date_to}. Use YYYY-MM-DD"
             )
 
+    # Cost filtering
+    if cost_min is not None:
+        query = query.where(Task.total_cost >= cost_min)
+
+    if cost_max is not None:
+        query = query.where(Task.total_cost <= cost_max)
+
+    # Duration filtering
+    if duration_min is not None:
+        query = query.where(Task.duration_seconds >= duration_min)
+
+    if duration_max is not None:
+        query = query.where(Task.duration_seconds <= duration_max)
+
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query)
 
     # Apply sorting
-    valid_sort_fields = {"created_at": Task.created_at, "updated_at": Task.updated_at}
+    valid_sort_fields = {
+        "created_at": Task.created_at,
+        "updated_at": Task.updated_at,
+        "total_cost": Task.total_cost,
+        "duration_seconds": Task.duration_seconds
+    }
     sort_field = valid_sort_fields.get(sort_by, Task.created_at)
 
     if sort_order.lower() == "asc":
