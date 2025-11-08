@@ -41,9 +41,7 @@ async def list_tasks(
     search: Optional[str] = Query(None, description="Search in task description"),
     date_from: Optional[str] = Query(None, description="Filter from date (ISO format: YYYY-MM-DD)"),
     date_to: Optional[str] = Query(None, description="Filter to date (ISO format: YYYY-MM-DD)"),
-    cost_min: Optional[float] = Query(None, ge=0, description="Minimum total cost"),
-    cost_max: Optional[float] = Query(None, ge=0, description="Maximum total cost"),
-    sort_by: str = Query("created_at", description="Sort field: created_at, total_cost, duration"),
+    sort_by: str = Query("created_at", description="Sort field: created_at, updated_at"),
     sort_order: str = Query("desc", description="Sort order: asc or desc"),
 ) -> TaskList:
     """
@@ -84,18 +82,12 @@ async def list_tasks(
                 detail=f"Invalid date_to format: {date_to}. Use YYYY-MM-DD"
             )
 
-    if cost_min is not None:
-        query = query.where(Task.total_cost >= cost_min)
-
-    if cost_max is not None:
-        query = query.where(Task.total_cost <= cost_max)
-
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query)
 
     # Apply sorting
-    valid_sort_fields = {"created_at": Task.created_at, "total_cost": Task.total_cost, "duration": Task.duration_seconds}
+    valid_sort_fields = {"created_at": Task.created_at, "updated_at": Task.updated_at}
     sort_field = valid_sort_fields.get(sort_by, Task.created_at)
 
     if sort_order.lower() == "asc":

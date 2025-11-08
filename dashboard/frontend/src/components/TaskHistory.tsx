@@ -5,13 +5,12 @@
  * Features:
  * - Full-text search across task descriptions
  * - Date range filtering
- * - Cost range filtering
  * - Status filtering
  * - Sortable columns
  * - Pagination
  */
 import { useState, useEffect } from 'react';
-import { Search, Filter, ChevronDown, ChevronUp, Calendar, DollarSign } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { taskApi } from '../services/api';
 import type { Task } from '../types';
@@ -21,8 +20,6 @@ interface TaskHistoryFilters {
   status: string;
   dateFrom: string;
   dateTo: string;
-  costMin: string;
-  costMax: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
 }
@@ -35,8 +32,6 @@ export function TaskHistory() {
     status: '',
     dateFrom: '',
     dateTo: '',
-    costMin: '',
-    costMax: '',
     sortBy: 'created_at',
     sortOrder: 'desc'
   });
@@ -53,8 +48,6 @@ export function TaskHistory() {
       if (filters.status) params.append('status', filters.status);
       if (filters.dateFrom) params.append('date_from', filters.dateFrom);
       if (filters.dateTo) params.append('date_to', filters.dateTo);
-      if (filters.costMin) params.append('cost_min', filters.costMin);
-      if (filters.costMax) params.append('cost_max', filters.costMax);
       params.append('sort_by', filters.sortBy);
       params.append('sort_order', filters.sortOrder);
 
@@ -91,24 +84,10 @@ export function TaskHistory() {
       status: '',
       dateFrom: '',
       dateTo: '',
-      costMin: '',
-      costMax: '',
       sortBy: 'created_at',
       sortOrder: 'desc'
     });
     setPage(1);
-  };
-
-  const formatCost = (cost: number | null): string => {
-    if (cost === null || cost === undefined) return '$0.00';
-    return `$${cost.toFixed(4)}`;
-  };
-
-  const formatDuration = (seconds: number | null): string => {
-    if (!seconds) return '-';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}m ${secs}s`;
   };
 
   const formatDate = (dateStr: string): string => {
@@ -182,7 +161,7 @@ export function TaskHistory() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Status Filter */}
             <div>
               <label className="text-sm font-medium block mb-2">Status</label>
@@ -217,32 +196,6 @@ export function TaskHistory() {
                 type="date"
                 value={filters.dateTo}
                 onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                className="w-full px-3 py-2 bg-background border border-border rounded-md"
-              />
-            </div>
-
-            {/* Cost Min */}
-            <div>
-              <label className="text-sm font-medium block mb-2">Min Cost ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={filters.costMin}
-                onChange={(e) => handleFilterChange('costMin', e.target.value)}
-                placeholder="0.00"
-                className="w-full px-3 py-2 bg-background border border-border rounded-md"
-              />
-            </div>
-
-            {/* Cost Max */}
-            <div>
-              <label className="text-sm font-medium block mb-2">Max Cost ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={filters.costMax}
-                onChange={(e) => handleFilterChange('costMax', e.target.value)}
-                placeholder="10.00"
                 className="w-full px-3 py-2 bg-background border border-border rounded-md"
               />
             </div>
@@ -296,17 +249,8 @@ export function TaskHistory() {
                     <th className="px-4 py-3 text-left text-sm font-medium">
                       Status
                     </th>
-                    <th
-                      className="px-4 py-3 text-right text-sm font-medium cursor-pointer hover:bg-muted/80"
-                      onClick={() => handleSort('total_cost')}
-                    >
-                      Cost <SortIcon field="total_cost" />
-                    </th>
-                    <th
-                      className="px-4 py-3 text-right text-sm font-medium cursor-pointer hover:bg-muted/80"
-                      onClick={() => handleSort('duration')}
-                    >
-                      Duration <SortIcon field="duration" />
+                    <th className="px-4 py-3 text-left text-sm font-medium">
+                      Type
                     </th>
                     <th className="px-4 py-3 text-center text-sm font-medium">
                       Agents
@@ -325,11 +269,8 @@ export function TaskHistory() {
                       <td className="px-4 py-3 text-sm">
                         {getStatusBadge(task.status)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-right font-mono">
-                        {formatCost(task.total_cost)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        {formatDuration(task.duration_seconds)}
+                      <td className="px-4 py-3 text-sm capitalize">
+                        {task.task_type?.replace(/_/g, ' ') || 'N/A'}
                       </td>
                       <td className="px-4 py-3 text-sm text-center">
                         {task.workflow?.length || 0}
