@@ -2,13 +2,11 @@
 
 import time
 from typing import Dict, Optional
-from datetime import datetime, timezone
 
 from rich.console import Console
 from rich.live import Live
 from rich.table import Table
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 
 from orchestrator.core.types import AgentStatus
 
@@ -47,7 +45,7 @@ class ProgressTracker:
         self.total_cost: float = 0.0
         self.start_time: Optional[float] = None
 
-    def start(self, workflow_steps: Optional[list] = None):
+    def start(self, workflow_steps: Optional[list] = None) -> None:
         """
         Start progress tracking display.
 
@@ -70,7 +68,7 @@ class ProgressTracker:
         )
         self.live.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop progress tracking display."""
         if self.live:
             self.live.stop()
@@ -99,7 +97,7 @@ class ProgressTracker:
         elapsed = f"{int(time.time() - self.start_time)}s" if self.start_time else "0s"
         return Panel(
             layout_table,
-            title=f"[bold cyan]Orchestrator Progress[/bold cyan]",
+            title="[bold cyan]Orchestrator Progress[/bold cyan]",
             subtitle=f"Elapsed: {elapsed}",
             border_style="cyan"
         )
@@ -168,12 +166,12 @@ class ProgressTracker:
         }
         return icons.get(status, "[dim]?[/dim] Unknown")
 
-    def update(self):
+    def update(self) -> None:
         """Refresh the display with current state."""
         if self.live:
             self.live.update(self._generate_display())
 
-    def agent_created(self, agent_id: str, name: str, role: str):
+    def agent_created(self, agent_id: str, name: str, role: str) -> None:
         """Record agent creation."""
         self.agents[agent_id] = {
             "name": name,
@@ -185,7 +183,7 @@ class ProgressTracker:
         self.current_agent_id = agent_id
         self.update()
 
-    def agent_started(self, agent_id: str):
+    def agent_started(self, agent_id: str) -> None:
         """Record agent started execution."""
         if agent_id in self.agents:
             self.agents[agent_id]["status"] = AgentStatus.RUNNING
@@ -193,13 +191,13 @@ class ProgressTracker:
             self.current_agent_id = agent_id
             self.update()
 
-    def agent_activity(self, agent_id: str, activity: str):
+    def agent_activity(self, agent_id: str, activity: str) -> None:
         """Update agent's current activity."""
         if agent_id in self.agents:
             self.agents[agent_id]["current_activity"] = activity
             self.update()
 
-    def agent_completed(self, agent_id: str, cost: float):
+    def agent_completed(self, agent_id: str, cost: float) -> None:
         """Record agent completion."""
         if agent_id in self.agents:
             self.agents[agent_id]["status"] = AgentStatus.COMPLETED
@@ -212,20 +210,20 @@ class ProgressTracker:
 
             self.update()
 
-    def agent_failed(self, agent_id: str, error: str):
+    def agent_failed(self, agent_id: str, error: str) -> None:
         """Record agent failure."""
         if agent_id in self.agents:
             self.agents[agent_id]["status"] = AgentStatus.FAILED
             self.agents[agent_id]["current_activity"] = f"Error: {error[:50]}"
             self.update()
 
-    def tool_call(self, agent_id: str, tool_name: str):
+    def tool_call(self, agent_id: str, tool_name: str) -> None:
         """Record tool call."""
         if agent_id in self.agents:
             self.agents[agent_id]["current_activity"] = f"Using {tool_name}..."
             self.update()
 
-    def thinking(self, agent_id: str):
+    def thinking(self, agent_id: str) -> None:
         """Record agent thinking."""
         if agent_id in self.agents:
             self.agents[agent_id]["current_activity"] = "Thinking..."

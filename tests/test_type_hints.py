@@ -328,12 +328,12 @@ class TestTypeHintFunctionality:
         assert isinstance(deleted, bool)
         assert deleted is True
 
-    def test_task_planner_with_type_hints_works(self):
+    async def test_task_planner_with_type_hints_works(self):
         """Test that TaskPlanner works correctly with type hints."""
         planner = TaskPlanner()
 
         # Plan task
-        task = planner.plan_task(
+        task = await planner.plan_task(
             task_id="test-task",
             description="Test task",
             task_type="feature_implementation"

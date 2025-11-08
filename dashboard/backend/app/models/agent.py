@@ -3,7 +3,6 @@ Agent database model.
 """
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, DateTime, Enum as SQLEnum, JSON, Integer
-from sqlalchemy.orm import relationship
 from app.core.database import Base
 import enum
 

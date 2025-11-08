@@ -19,7 +19,7 @@ console = Console()
 
 
 @click.group()
-def cli():
+def cli() -> None:
     """Claude Multi-Agent Orchestrator CLI.
 
     Note: Authentication is handled through Claude Code CLI.
@@ -33,9 +33,9 @@ def cli():
 @click.option("--task-type", default="auto", help="Task type (auto, feature_implementation, bug_fix, etc.)")
 @click.option("--mode", default="sequential", type=click.Choice(["sequential", "parallel"]))
 @click.option("--no-cleanup", is_flag=True, help="Don't cleanup agents after completion")
-def execute(prompt: str, task_type: str, mode: str, no_cleanup: bool):
+def execute(prompt: str, task_type: str, mode: str, no_cleanup: bool) -> None:
     """Execute a high-level task with the orchestrator."""
-    async def run():
+    async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=True)
 
         try:
@@ -83,9 +83,9 @@ def execute(prompt: str, task_type: str, mode: str, no_cleanup: bool):
 
 
 @cli.command()
-def status():
+def status() -> None:
     """Show orchestrator status."""
-    async def run():
+    async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
         try:
@@ -102,9 +102,9 @@ def status():
 
 @cli.command()
 @click.option("--role", type=click.Choice([r.value for r in AgentRole]), help="Filter by role")
-def list_agents(role: Optional[str]):
+def list_agents(role: Optional[str]) -> None:
     """List all active agents."""
-    async def run():
+    async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
         try:
@@ -144,9 +144,9 @@ def list_agents(role: Optional[str]):
 
 
 @cli.command()
-def list_tasks():
+def list_tasks() -> None:
     """List all tasks."""
-    async def run():
+    async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
         try:
@@ -182,9 +182,9 @@ def list_tasks():
 
 @cli.command()
 @click.argument("task_id")
-def task_details(task_id: str):
+def task_details(task_id: str) -> None:
     """Show details for a specific task."""
-    async def run():
+    async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
         try:
@@ -205,9 +205,9 @@ def task_details(task_id: str):
 
 @cli.command()
 @click.argument("agent_id")
-def agent_details(agent_id: str):
+def agent_details(agent_id: str) -> None:
     """Show details for a specific agent."""
-    async def run():
+    async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
         try:
@@ -227,7 +227,7 @@ def agent_details(agent_id: str):
 
 
 @cli.command()
-def init():
+def init() -> None:
     """Initialize a new orchestrator configuration."""
     if Path(".env").exists():
         overwrite = click.confirm(".env file exists. Overwrite?")
@@ -274,9 +274,9 @@ ENABLE_OBSERVABILITY=true
 @cli.command()
 @click.option("--older-than", type=int, help="Clean agents/tasks older than N days")
 @click.option("--dry-run", is_flag=True, help="Show what would be deleted without deleting")
-def clean(older_than: Optional[int], dry_run: bool):
+def clean(older_than: Optional[int], dry_run: bool) -> None:
     """Clean up old agents and tasks from the database."""
-    async def run():
+    async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
         try:
@@ -320,9 +320,9 @@ def clean(older_than: Optional[int], dry_run: bool):
 @click.option("--format", type=click.Choice(["table", "json", "csv"]), default="table", help="Output format")
 @click.option("--by-agent", is_flag=True, help="Show breakdown by agent")
 @click.option("--by-role", is_flag=True, help="Show breakdown by role")
-def cost_report(format: str, by_agent: bool, by_role: bool):
+def cost_report(format: str, by_agent: bool, by_role: bool) -> None:
     """Generate a cost analysis report."""
-    async def run():
+    async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
         try:

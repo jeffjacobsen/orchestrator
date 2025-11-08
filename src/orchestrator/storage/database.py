@@ -1,6 +1,5 @@
 """Database layer for persisting agent and task state."""
 
-import json
 import aiosqlite
 from pathlib import Path
 from typing import List, Optional
@@ -23,6 +22,13 @@ class Database:
         self.db_path = db_path
         self.connection: Optional[aiosqlite.Connection] = None
 
+    @property
+    def conn(self) -> aiosqlite.Connection:
+        """Get database connection, raising error if not connected."""
+        if not self.connection:
+            raise RuntimeError("Database connection not established. Call connect() first.")
+        return self.connection
+
     async def connect(self) -> None:
         """Connect to database and create tables."""
         self.connection = await aiosqlite.connect(str(self.db_path))
@@ -35,7 +41,7 @@ class Database:
 
     async def _create_tables(self) -> None:
         """Create database tables."""
-        await self.connection.execute("""
+        await self.conn.execute("""
             CREATE TABLE IF NOT EXISTS agents (
                 agent_id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -51,7 +57,7 @@ class Database:
             )
         """)
 
-        await self.connection.execute("""
+        await self.conn.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
                 task_id TEXT PRIMARY KEY,
                 description TEXT NOT NULL,
@@ -65,13 +71,13 @@ class Database:
             )
         """)
 
-        await self.connection.commit()
+        await self.conn.commit()
 
     # Agent operations
 
     async def save_agent(self, record: AgentRecord) -> None:
         """Save or update an agent record."""
-        await self.connection.execute(
+        await self.conn.execute(
             """
             INSERT OR REPLACE INTO agents
             (agent_id, name, role, model, status, total_cost, total_tokens,
@@ -92,11 +98,11 @@ class Database:
                 record.deleted_at.isoformat() if record.deleted_at else None,
             ),
         )
-        await self.connection.commit()
+        await self.conn.commit()
 
     async def get_agent(self, agent_id: str) -> Optional[AgentRecord]:
         """Get an agent record by ID."""
-        cursor = await self.connection.execute(
+        cursor = await self.conn.execute(
             "SELECT * FROM agents WHERE agent_id = ?",
             (agent_id,),
         )
@@ -126,12 +132,12 @@ class Database:
 
         query += " ORDER BY created_at DESC"
 
-        cursor = await self.connection.execute(query, params)
+        cursor = await self.conn.execute(query, params)
         rows = await cursor.fetchall()
 
         return [self._agent_from_row(row) for row in rows]
 
-    def _agent_from_row(self, row) -> AgentRecord:
+    def _agent_from_row(self, row: aiosqlite.Row) -> AgentRecord:
         """Convert database row to AgentRecord."""
         return AgentRecord(
             agent_id=row[0],
@@ -151,7 +157,7 @@ class Database:
 
     async def save_task(self, record: TaskRecord) -> None:
         """Save or update a task record."""
-        await self.connection.execute(
+        await self.conn.execute(
             """
             INSERT OR REPLACE INTO tasks
             (task_id, description, task_type, status, assigned_agents,
@@ -170,11 +176,11 @@ class Database:
                 record.result,
             ),
         )
-        await self.connection.commit()
+        await self.conn.commit()
 
     async def get_task(self, task_id: str) -> Optional[TaskRecord]:
         """Get a task record by ID."""
-        cursor = await self.connection.execute(
+        cursor = await self.conn.execute(
             "SELECT * FROM tasks WHERE task_id = ?",
             (task_id,),
         )
@@ -196,12 +202,12 @@ class Database:
 
         query += " ORDER BY created_at DESC"
 
-        cursor = await self.connection.execute(query, params)
+        cursor = await self.conn.execute(query, params)
         rows = await cursor.fetchall()
 
         return [self._task_from_row(row) for row in rows]
 
-    def _task_from_row(self, row) -> TaskRecord:
+    def _task_from_row(self, row: aiosqlite.Row) -> TaskRecord:
         """Convert database row to TaskRecord."""
         return TaskRecord(
             task_id=row[0],
@@ -219,15 +225,15 @@ class Database:
 
     async def get_total_cost(self) -> float:
         """Get total cost across all tasks."""
-        cursor = await self.connection.execute(
+        cursor = await self.conn.execute(
             "SELECT SUM(total_cost) FROM tasks"
         )
         row = await cursor.fetchone()
-        return row[0] if row[0] else 0.0
+        return row[0] if row and row[0] else 0.0
 
     async def get_cost_by_role(self) -> dict:
         """Get cost breakdown by agent role."""
-        cursor = await self.connection.execute(
+        cursor = await self.conn.execute(
             """
             SELECT role, SUM(total_cost) as total
             FROM agents

@@ -36,6 +36,9 @@ class ErrorResponse(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
 
     model_config = {
+        "json_encoders": {
+            datetime: lambda v: v.isoformat()
+        },
         "json_schema_extra": {
             "example": {
                 "code": "AGENT_NOT_FOUND",

@@ -4,10 +4,8 @@ Orchestrator execution service.
 This module integrates the orchestrator execution engine with the dashboard,
 allowing tasks to be executed via the API.
 """
-import asyncio
 import logging
 from datetime import datetime, timezone
-from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.task import Task, TaskStatus
@@ -41,7 +39,6 @@ class DashboardProgressTracker:
 
     async def agent_created(self, agent_id: str, name: str, role: str):
         """Broadcast agent creation to dashboard."""
-        from sqlalchemy import select
 
         logger.info(f"Agent created: {agent_id} ({role})")
 
@@ -296,7 +293,6 @@ async def execute_task_background(task_id: str, db_url: str, working_directory: 
     """
     from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
     from sqlalchemy.orm import sessionmaker
-    from app.models.task import Task
 
     # Create database session
     engine = create_async_engine(db_url)

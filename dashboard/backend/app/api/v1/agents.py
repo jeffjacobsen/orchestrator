@@ -1,7 +1,7 @@
 """
 Agent API endpoints.
 """
-from typing import List, Optional
+from typing import Optional
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, func

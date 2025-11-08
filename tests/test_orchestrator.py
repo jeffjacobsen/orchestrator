@@ -75,13 +75,14 @@ async def test_agent_manager_delete_agent():
     assert agent_after is None
 
 
-def test_task_planner_plan_task():
+@pytest.mark.asyncio
+async def test_task_planner_plan_task():
     """Test task planning."""
     from orchestrator.workflow.planner import TaskPlanner
 
     planner = TaskPlanner()
 
-    task = planner.plan_task(
+    task = await planner.plan_task(
         task_id="test-task",
         description="Implement a new feature",
         task_type="feature_implementation"

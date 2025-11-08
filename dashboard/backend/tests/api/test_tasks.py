@@ -11,7 +11,6 @@ This test suite verifies that:
 import os
 import tempfile
 import pytest
-from httpx import AsyncClient
 from fastapi import status
 
 # These imports assume the backend app is properly structured
@@ -24,12 +23,7 @@ except ImportError:
     pytest.skip("Backend dependencies not available", allow_module_level=True)
 
 
-@pytest.fixture
-async def client():
-    """Create an async test client."""
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        yield ac
-
+# Note: client and api_key_headers fixtures are now defined in conftest.py
 
 @pytest.fixture
 def valid_temp_directory():
@@ -49,15 +43,6 @@ def temp_file_path():
         os.unlink(file_path)
 
 
-@pytest.fixture
-def api_key_headers():
-    """Return headers with API key for authenticated requests."""
-    # Adjust based on your actual API key configuration
-    return {
-        "X-API-Key": os.getenv("API_KEY", "test-api-key")
-    }
-
-
 class TestTaskCreationWithValidDirectory:
     """Test suite for task creation with valid working directories."""
 
@@ -70,7 +55,7 @@ class TestTaskCreationWithValidDirectory:
             "description": "Test task with valid directory",
             "task_type": "feature_implementation",
             "working_directory": valid_temp_directory,
-            "include_analyst": True,
+            "include_analyst": "yes",
         }
 
         response = await client.post(
@@ -96,7 +81,7 @@ class TestTaskCreationWithValidDirectory:
             "description": "Test task with relative directory",
             "task_type": "bug_fix",
             "working_directory": ".",  # Current directory
-            "include_analyst": False,
+            "include_analyst": "no",
         }
 
         response = await client.post(
@@ -118,7 +103,7 @@ class TestTaskCreationWithValidDirectory:
         task_data = {
             "description": "Test task without working directory",
             "task_type": "code_review",
-            "include_analyst": True,
+            "include_analyst": "yes",
         }
 
         response = await client.post(
@@ -144,7 +129,7 @@ class TestTaskCreationWithValidDirectory:
             "description": "Test task with nested directory",
             "task_type": "documentation",
             "working_directory": nested_dir,
-            "include_analyst": False,
+            "include_analyst": "no",
         }
 
         response = await client.post(
@@ -172,7 +157,7 @@ class TestTaskCreationWithInvalidDirectory:
             "description": "Test task with non-existent directory",
             "task_type": "feature_implementation",
             "working_directory": nonexistent_path,
-            "include_analyst": True,
+            "include_analyst": "yes",
         }
 
         response = await client.post(
@@ -196,7 +181,7 @@ class TestTaskCreationWithInvalidDirectory:
             "description": "Test task with file path",
             "task_type": "bug_fix",
             "working_directory": temp_file_path,
-            "include_analyst": False,
+            "include_analyst": "no",
         }
 
         response = await client.post(
@@ -219,7 +204,7 @@ class TestTaskCreationWithInvalidDirectory:
             "description": "Test task with empty directory",
             "task_type": "code_review",
             "working_directory": "",  # Empty string
-            "include_analyst": True,
+            "include_analyst": "yes",
         }
 
         response = await client.post(
@@ -258,7 +243,7 @@ class TestTaskCreationDirectoryPermissions:
                 "description": "Test task with unreadable directory",
                 "task_type": "feature_implementation",
                 "working_directory": unreadable_dir,
-                "include_analyst": True,
+                "include_analyst": "yes",
             }
 
             response = await client.post(
@@ -292,7 +277,7 @@ class TestTaskCreationDirectoryPermissions:
             "description": "Test task with readable directory",
             "task_type": "documentation",
             "working_directory": readable_dir,
-            "include_analyst": False,
+            "include_analyst": "no",
         }
 
         response = await client.post(
@@ -321,7 +306,7 @@ class TestTaskCreationEdgeCases:
             "description": "Test task with special characters in path",
             "task_type": "bug_fix",
             "working_directory": special_dir,
-            "include_analyst": True,
+            "include_analyst": "yes",
         }
 
         response = await client.post(
@@ -354,7 +339,7 @@ class TestTaskCreationEdgeCases:
             "description": "Test task with symlink directory",
             "task_type": "code_review",
             "working_directory": symlink_dir,
-            "include_analyst": False,
+            "include_analyst": "no",
         }
 
         response = await client.post(
@@ -378,7 +363,7 @@ class TestTaskCreationEdgeCases:
             "description": "Test task with Unicode path",
             "task_type": "feature_implementation",
             "working_directory": unicode_dir,
-            "include_analyst": True,
+            "include_analyst": "yes",
         }
 
         response = await client.post(
@@ -400,14 +385,14 @@ class TestTaskCreationEdgeCases:
             "description": "First task in shared directory",
             "task_type": "feature_implementation",
             "working_directory": valid_temp_directory,
-            "include_analyst": True,
+            "include_analyst": "yes",
         }
 
         task_data_2 = {
             "description": "Second task in shared directory",
             "task_type": "bug_fix",
             "working_directory": valid_temp_directory,
-            "include_analyst": False,
+            "include_analyst": "no",
         }
 
         response_1 = await client.post(
@@ -446,7 +431,7 @@ class TestTaskComplexityDetection:
             "description": "Fix bug",  # Short description
             "task_type": "bug_fix",
             "working_directory": valid_temp_directory,
-            "include_analyst": False,
+            "include_analyst": "no",
         }
 
         response = await client.post(
@@ -470,7 +455,7 @@ class TestTaskComplexityDetection:
             "description": long_description,
             "task_type": "feature_implementation",
             "working_directory": valid_temp_directory,
-            "include_analyst": True,
+            "include_analyst": "yes",
         }
 
         response = await client.post(
@@ -503,7 +488,7 @@ class TestTaskCreationIntegration:
             "description": "Implement user authentication with OAuth2 support",
             "task_type": "feature_implementation",
             "working_directory": valid_temp_directory,
-            "include_analyst": True,
+            "include_analyst": "yes",
             "task_metadata": {
                 "priority": "high",
                 "assigned_team": "backend"
@@ -524,7 +509,7 @@ class TestTaskCreationIntegration:
         assert data["description"] == task_data["description"]
         assert data["task_type"] == task_data["task_type"]
         assert data["working_directory"] == valid_temp_directory
-        assert data["include_analyst"] is True
+        assert data["include_analyst"] == "yes"
         assert data["status"] == "pending"
         assert data["complexity"] in ["simple", "complex"]
         assert "id" in data

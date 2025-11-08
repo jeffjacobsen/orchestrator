@@ -74,7 +74,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             message="Request validation failed",
             details={"errors": exc.errors()},
             request_id=request.headers.get("X-Request-ID", ""),
-        ).model_dump(),
+        ).model_dump(mode='json'),
     )
 
 

@@ -2,7 +2,6 @@
 
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from collections import defaultdict
 
 from orchestrator.core.types import AgentMetrics
 

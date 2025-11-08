@@ -2,9 +2,9 @@
 
 import asyncio
 import inspect
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Dict, List, Optional, cast
 from orchestrator.core.agent_manager import AgentManager
-from orchestrator.core.types import OrchestratorTask, AgentStatus, TaskResult
+from orchestrator.core.types import OrchestratorTask, TaskResult
 from orchestrator.observability.monitor import AgentMonitor
 from orchestrator.observability.progress import ProgressTracker
 from orchestrator.workflow.context_parser import extract_structured_output, AgentContext

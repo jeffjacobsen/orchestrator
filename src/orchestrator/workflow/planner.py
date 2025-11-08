@@ -564,7 +564,7 @@ Respond with ONLY valid JSON (no markdown, no explanation)."""
 
         # Check if output is empty (potential SDK/timing issue)
         if not result.output or not result.output.strip():
-            logger.error(f"PLANNER returned empty output despite success=True")
+            logger.error("PLANNER returned empty output despite success=True")
             logger.error(f"Agent ID: {planner_agent.agent_id}, Metrics: {result.metrics}")
             raise RuntimeError(
                 f"PLANNER agent succeeded but returned empty output. "

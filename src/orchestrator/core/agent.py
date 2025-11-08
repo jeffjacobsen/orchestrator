@@ -1,6 +1,5 @@
 """Individual agent wrapper for Claude Code SDK interactions."""
 
-import asyncio
 import os
 import time
 from datetime import datetime, timezone

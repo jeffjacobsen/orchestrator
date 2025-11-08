@@ -438,7 +438,6 @@ class Orchestrator:
 
         # If no results, create default metrics
         if total_metrics is None:
-            from orchestrator.core.types import AgentMetrics
             total_metrics = AgentMetrics(agent_id="orchestrator")
 
         return TaskResult(

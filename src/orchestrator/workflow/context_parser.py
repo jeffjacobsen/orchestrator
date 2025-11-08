@@ -62,13 +62,13 @@ class AgentContext:
             context_parts.append(f"## Previous Agent Summary\n{self.summary}")
 
         if self.files_created:
-            context_parts.append(f"\n## Files Created\n" + "\n".join(f"- {f}" for f in self.files_created))
+            context_parts.append("\n## Files Created\n" + "\n".join(f"- {f}" for f in self.files_created))
 
         if self.files_modified:
-            context_parts.append(f"\n## Files Modified\n" + "\n".join(f"- {f}" for f in self.files_modified))
+            context_parts.append("\n## Files Modified\n" + "\n".join(f"- {f}" for f in self.files_modified))
 
         if self.key_findings:
-            context_parts.append(f"\n## Key Findings\n" + "\n".join(f"- {f}" for f in self.key_findings))
+            context_parts.append("\n## Key Findings\n" + "\n".join(f"- {f}" for f in self.key_findings))
 
         if self.recommendations:
             context_parts.append(f"\n## Recommendations\n{self.recommendations}")
@@ -85,7 +85,7 @@ class AgentContext:
         context_parts = [f"## Previous Agent Summary\n{self.summary}"]
 
         if self.errors:
-            context_parts.append(f"\n## Errors Found\n" + "\n".join(f"- {e}" for e in self.errors))
+            context_parts.append("\n## Errors Found\n" + "\n".join(f"- {e}" for e in self.errors))
 
         if self.test_results:
             context_parts.append(f"\n## Test Results\n{self._format_test_results()}")

@@ -7,6 +7,7 @@ import sys
 import asyncio
 from typing import AsyncGenerator, Generator
 import pytest
+from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -15,6 +16,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from app.core.database import Base, get_db
 from app.core.config import settings
+from app.core.security import verify_api_key
 
 
 # Configure async event loop for pytest-asyncio
@@ -82,10 +84,47 @@ def api_key():
 
 @pytest.fixture(scope="function")
 def api_key_headers(api_key):
-    """Return headers with API key for authenticated requests."""
+    """Return headers with Bearer token for authenticated requests."""
     return {
-        "X-API-Key": api_key
+        "Authorization": f"Bearer {api_key}"
     }
+
+
+async def mock_verify_api_key():
+    """Mock API key verification - always succeeds in tests."""
+    return True
+
+
+@pytest.fixture(scope="function")
+async def client(test_db_session):
+    """
+    Create an async test client with mocked authentication.
+
+    This fixture:
+    - Overrides the verify_api_key dependency to bypass authentication
+    - Overrides the get_db dependency to use the test database
+    - Provides a fully configured AsyncClient for testing
+    """
+    from app.main import app
+
+    # Override authentication
+    app.dependency_overrides[verify_api_key] = mock_verify_api_key
+
+    # Override database
+    async def _override_get_db():
+        yield test_db_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+
+    # Create test client
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test"
+    ) as ac:
+        yield ac
+
+    # Clean up overrides
+    app.dependency_overrides.clear()
 
 
 # Mock settings for testing
