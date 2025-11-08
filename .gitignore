@@ -57,3 +57,7 @@ agent_logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Test reports and backups
+TEST_REPORT.md
+agent_logs_backup_*/
