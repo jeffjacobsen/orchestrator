@@ -31,32 +31,80 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
     response_model=TaskList,
     dependencies=[Depends(verify_api_key)],
     summary="List all tasks",
-    description="Get a paginated list of all tasks with optional filtering.",
+    description="Get a paginated list of all tasks with optional filtering, search, and sorting.",
 )
 async def list_tasks(
     db: AsyncSession = Depends(get_db),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     status: Optional[TaskStatus] = Query(None, description="Filter by status"),
+    search: Optional[str] = Query(None, description="Search in task description"),
+    date_from: Optional[str] = Query(None, description="Filter from date (ISO format: YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="Filter to date (ISO format: YYYY-MM-DD)"),
+    cost_min: Optional[float] = Query(None, ge=0, description="Minimum total cost"),
+    cost_max: Optional[float] = Query(None, ge=0, description="Maximum total cost"),
+    sort_by: str = Query("created_at", description="Sort field: created_at, total_cost, duration"),
+    sort_order: str = Query("desc", description="Sort order: asc or desc"),
 ) -> TaskList:
     """
-    List all tasks with optional filters.
+    List all tasks with optional filters, search, and sorting.
 
     Returns:
         TaskList: Paginated list of tasks
     """
     # Build query
     query = select(Task)
+
+    # Apply filters
     if status:
         query = query.where(Task.status == status)
+
+    if search:
+        query = query.where(Task.description.ilike(f"%{search}%"))
+
+    if date_from:
+        try:
+            from_dt = datetime.fromisoformat(date_from)
+            query = query.where(Task.created_at >= from_dt)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid date_from format: {date_from}. Use YYYY-MM-DD"
+            )
+
+    if date_to:
+        try:
+            to_dt = datetime.fromisoformat(date_to)
+            # Include the entire day by setting time to 23:59:59
+            to_dt = to_dt.replace(hour=23, minute=59, second=59)
+            query = query.where(Task.created_at <= to_dt)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid date_to format: {date_to}. Use YYYY-MM-DD"
+            )
+
+    if cost_min is not None:
+        query = query.where(Task.total_cost >= cost_min)
+
+    if cost_max is not None:
+        query = query.where(Task.total_cost <= cost_max)
 
     # Get total count
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query)
 
+    # Apply sorting
+    valid_sort_fields = {"created_at": Task.created_at, "total_cost": Task.total_cost, "duration": Task.duration_seconds}
+    sort_field = valid_sort_fields.get(sort_by, Task.created_at)
+
+    if sort_order.lower() == "asc":
+        query = query.order_by(sort_field.asc())
+    else:
+        query = query.order_by(sort_field.desc())
+
     # Apply pagination
     query = query.offset((page - 1) * page_size).limit(page_size)
-    query = query.order_by(Task.created_at.desc())
 
     # Execute query
     result = await db.execute(query)

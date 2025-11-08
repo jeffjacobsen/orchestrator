@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { TaskList } from './components/TaskList'
+import { TaskHistory } from './components/TaskHistory'
 import { TaskExecutionForm } from './components/TaskExecutionForm'
-import { Activity, Wifi, WifiOff, Plus } from 'lucide-react'
+import { Activity, Wifi, WifiOff, Plus, List, History } from 'lucide-react'
 import { useWebSocket } from './hooks/useWebSocket'
+
+type View = 'tasks' | 'history'
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -19,6 +22,7 @@ function App() {
 
   const [wsConnected, setWsConnected] = useState(false)
   const [showTaskForm, setShowTaskForm] = useState(false)
+  const [currentView, setCurrentView] = useState<View>('tasks')
 
   // Initialize WebSocket connection for real-time updates
   useWebSocket({
@@ -53,7 +57,7 @@ function App() {
               <Activity className="h-6 w-6 text-primary" />
               <h1 className="text-xl font-bold">Orchestrator Dashboard</h1>
               <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-                v0.1.0
+                v0.1.5
               </span>
             </div>
 
@@ -82,39 +86,76 @@ function App() {
               </button>
             </div>
           </div>
+
+          {/* Navigation Tabs */}
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => setCurrentView('tasks')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                currentView === 'tasks'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'hover:bg-accent text-muted-foreground'
+              }`}
+            >
+              <List className="h-4 w-4" />
+              <span className="font-medium">Active Tasks</span>
+            </button>
+            <button
+              onClick={() => setCurrentView('history')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                currentView === 'history'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'hover:bg-accent text-muted-foreground'
+              }`}
+            >
+              <History className="h-4 w-4" />
+              <span className="font-medium">Task History</span>
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Task Execution Section */}
-        <section>
-          {showTaskForm ? (
-            <TaskExecutionForm
-              onSuccess={() => setShowTaskForm(false)}
-              onCancel={() => setShowTaskForm(false)}
-            />
-          ) : (
-            <button
-              onClick={() => setShowTaskForm(true)}
-              className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
-            >
-              <Plus className="h-5 w-5" />
-              New Task
-            </button>
-          )}
-        </section>
+        {currentView === 'tasks' ? (
+          <>
+            {/* Task Execution Section */}
+            <section>
+              {showTaskForm ? (
+                <TaskExecutionForm
+                  onSuccess={() => setShowTaskForm(false)}
+                  onCancel={() => setShowTaskForm(false)}
+                />
+              ) : (
+                <button
+                  onClick={() => setShowTaskForm(true)}
+                  className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
+                >
+                  <Plus className="h-5 w-5" />
+                  New Task
+                </button>
+              )}
+            </section>
 
-        {/* Tasks Section */}
-        <section>
-          <TaskList />
-        </section>
+            {/* Active Tasks Section */}
+            <section>
+              <TaskList />
+            </section>
+          </>
+        ) : (
+          <>
+            {/* Task History Section */}
+            <section>
+              <TaskHistory />
+            </section>
+          </>
+        )}
       </main>
 
       {/* Footer */}
       <footer className="border-t mt-12">
         <div className="container mx-auto px-4 py-4 text-center text-sm text-muted-foreground">
-          Claude Multi-Agent Orchestrator Dashboard • Phase 2: Real-Time Updates
+          Claude Multi-Agent Orchestrator Dashboard • Phase 3: Analytics & Insights
         </div>
       </footer>
     </div>
