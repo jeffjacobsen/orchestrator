@@ -2,7 +2,7 @@
 
 import asyncio
 import inspect
-from typing import Dict, List, Optional, cast
+from typing import Any, Awaitable, Callable, Dict, List, Optional, cast
 from orchestrator.core.agent_manager import AgentManager
 from orchestrator.core.types import OrchestratorTask, TaskResult
 from orchestrator.observability.monitor import AgentMonitor
@@ -307,14 +307,14 @@ class WorkflowExecutor:
 
         for i, subtask in enumerate(task.subtasks):
             # Create progress callback for this agent
-            def make_progress_callback(agent_id: str, agent_name: str, agent_role: str):
+            def make_progress_callback(agent_id: str, agent_name: str, agent_role: str) -> Callable[[str, str], Awaitable[None]]:
                 """Create a progress callback for an agent."""
                 async def progress_callback(event: str, data: str) -> None:
                     if not self.progress_tracker:
                         return
 
                     # Helper to call method and await if it's a coroutine
-                    async def call_method(method, *args):
+                    async def call_method(method: Any, *args: Any) -> None:
                         result = method(*args)
                         if inspect.iscoroutine(result):
                             await result
@@ -369,9 +369,7 @@ class WorkflowExecutor:
 
             # Update progress tracker with completion and cost
             if self.progress_tracker:
-                tracker_result = self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
-                if inspect.iscoroutine(tracker_result):
-                    await tracker_result
+                self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
 
             # Extract structured context from agent output
             if result.success and result.output:
@@ -769,14 +767,14 @@ class WorkflowExecutor:
             >>> # 4. When order matters (analyze → plan → build → test → review)
         """
         # Create progress callback function
-        def make_progress_callback(agent_id: str, agent_name: str, agent_role: str):
+        def make_progress_callback(agent_id: str, agent_name: str, agent_role: str) -> Callable[[str, str], Awaitable[None]]:
             """Create a progress callback for an agent."""
             async def progress_callback(event: str, data: str) -> None:
                 if not self.progress_tracker:
                     return
 
                 # Helper to call method and await if it's a coroutine
-                async def call_method(method, *args):
+                async def call_method(method: Any, *args: Any) -> None:
                     result = method(*args)
                     if inspect.iscoroutine(result):
                         await result
@@ -846,9 +844,7 @@ class WorkflowExecutor:
 
                 # Update progress tracker with completion and cost
                 if self.progress_tracker:
-                    tracker_result = self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
-                    if inspect.iscoroutine(tracker_result):
-                        await tracker_result
+                    self.progress_tracker.agent_completed(agent.agent_id, agent.metrics.total_cost)
 
                 processed_results.append(cast(TaskResult, result))
 

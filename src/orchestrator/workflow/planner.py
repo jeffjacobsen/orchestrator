@@ -651,6 +651,10 @@ Respond with ONLY valid JSON (no markdown, no explanation)."""
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON from PLANNER: {e}")
 
+        # Type assertion to help mypy
+        if not isinstance(plan, dict):
+            raise ValueError("Plan must be a dictionary")
+
         # Validate required fields
         required_fields = ["complexity", "rationale", "workflow"]
         for field in required_fields:

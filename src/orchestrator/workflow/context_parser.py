@@ -9,8 +9,8 @@ This module provides functions to parse agent outputs and extract:
 """
 
 import re
-from typing import Dict, List, Optional
-from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -21,33 +21,22 @@ class AgentContext:
     summary: str = ""
 
     # File manifests
-    files_created: List[str] = None
-    files_modified: List[str] = None
+    files_created: List[str] = field(default_factory=list)
+    files_modified: List[str] = field(default_factory=list)
 
     # Key information
-    key_findings: List[str] = None
+    key_findings: List[str] = field(default_factory=list)
     recommendations: str = ""
 
     # Test-specific
-    test_results: Optional[Dict[str, any]] = None  # pass/fail, errors
+    test_results: Optional[Dict[str, Any]] = None  # pass/fail, errors
 
     # Error handling
-    errors: List[str] = None
+    errors: List[str] = field(default_factory=list)
     requires_fix: bool = False
 
     # Full output (for rollback/debugging)
     full_output: str = ""
-
-    def __post_init__(self):
-        """Initialize mutable defaults."""
-        if self.files_created is None:
-            self.files_created = []
-        if self.files_modified is None:
-            self.files_modified = []
-        if self.key_findings is None:
-            self.key_findings = []
-        if self.errors is None:
-            self.errors = []
 
     def get_forward_context(self) -> str:
         """
@@ -203,9 +192,9 @@ def _extract_bullet_list(text: str) -> List[str]:
     return items
 
 
-def _extract_test_results(output: str) -> Optional[Dict[str, any]]:
+def _extract_test_results(output: str) -> Optional[Dict[str, Any]]:
     """Extract test results from TESTER output."""
-    results = {}
+    results: Dict[str, Any] = {}
 
     # Look for pytest-style output
     passed_match = re.search(r'(\d+) passed', output)
@@ -224,11 +213,12 @@ def _extract_test_results(output: str) -> Optional[Dict[str, any]]:
     return results if results else None
 
 
-def _has_test_failures(test_results: Optional[Dict]) -> bool:
+def _has_test_failures(test_results: Optional[Dict[str, Any]]) -> bool:
     """Check if test results indicate failures."""
     if not test_results:
         return False
-    return test_results.get('failed', 0) > 0
+    failed_count = test_results.get('failed', 0)
+    return bool(failed_count > 0)
 
 
 def _extract_test_errors(output: str) -> List[str]:

@@ -580,6 +580,27 @@ This document covers:
 - Real-time thinking display
 - And more...
 
+## Claude Code Enhancements
+
+For developers using Claude Code, we've created tailored slash commands, hooks, and MCP integrations to enhance your workflow. See [CLAUDE_CODE_ENHANCEMENTS.md](CLAUDE_CODE_ENHANCEMENTS.md) for:
+
+- **8 Custom Slash Commands**: `/test-full`, `/check-arch`, `/deploy-dashboard`, `/task-debug`, `/release-prep`, and more
+- **Safety Hooks**: Pre-commit architecture validation, pre-push test runner, database operation safety
+- **MCP Server Integrations**: GitHub, PostgreSQL, Prometheus for production monitoring
+- **Permissions Configuration**: Fine-grained control over file operations and bash commands
+- **Complete Implementation Code**: Ready-to-use commands in `.claude/commands/`
+
+**Quick Start**:
+```bash
+# Commands are already in .claude/commands/ - just use them!
+/test-full          # Run complete test suite
+/check-arch         # Validate architecture independence
+/deploy-dashboard   # Safe dashboard deployment
+/task-debug         # Debug failed tasks
+```
+
+Estimated time savings: **15-20 hours per month** from automation and error prevention.
+
 ## License
 
 MIT License

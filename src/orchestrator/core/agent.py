@@ -1,9 +1,10 @@
 """Individual agent wrapper for Claude Code SDK interactions."""
 
+import inspect
 import os
 import time
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 from claude_agent_sdk import (
     query,
     ClaudeAgentOptions,
@@ -39,7 +40,7 @@ class Agent:
         agent_id: str,
         config: AgentConfig,
         enable_logging: bool = True,
-        progress_callback: Optional[Callable[[str, str], None]] = None,
+        progress_callback: Optional[Union[Callable[[str, str], None], Callable[[str, str], Awaitable[None]]]] = None,
     ) -> None:
         self.agent_id = agent_id
         self.config = config
@@ -66,6 +67,13 @@ class Agent:
             task_id=config.task_id
         )
 
+    async def _call_progress_callback(self, event: str, data: str = "") -> None:
+        """Helper to call progress callback, handling both sync and async callbacks."""
+        if self.progress_callback:
+            result = self.progress_callback(event, data)
+            if inspect.iscoroutine(result):
+                await result
+
     async def execute_task(self, task_prompt: str) -> TaskResult:
         """
         Execute a task with the agent using Claude Code SDK.
@@ -81,8 +89,7 @@ class Agent:
         start_time = time.time()
 
         # Notify progress callback that agent started
-        if self.progress_callback:
-            await self.progress_callback("started", "")
+        await self._call_progress_callback("started")
 
         try:
             # Log the prompt
@@ -104,14 +111,12 @@ class Agent:
                             output_text += block.text
                         elif isinstance(block, ThinkingBlock):
                             # Report thinking activity
-                            if self.progress_callback:
-                                await self.progress_callback("thinking", "")
+                            await self._call_progress_callback("thinking")
                         elif isinstance(block, ToolUseBlock):
                             # Track tool usage
                             self._track_tool_use(block)
                             # Report tool activity
-                            if self.progress_callback:
-                                await self.progress_callback("tool_call", block.name)
+                            await self._call_progress_callback("tool_call", block.name)
                         elif isinstance(block, ToolResultBlock):
                             # Update tool call with result
                             self._track_tool_result(block)
@@ -129,8 +134,7 @@ class Agent:
             self.completed_at = datetime.now(timezone.utc)
 
             # Notify progress callback of completion
-            if self.progress_callback:
-                await self.progress_callback("completed", "")
+            await self._call_progress_callback("completed")
 
             return TaskResult(
                 agent_id=self.agent_id,
@@ -147,8 +151,7 @@ class Agent:
             self.metrics.execution_time_seconds = time.time() - start_time
 
             # Notify progress callback of failure
-            if self.progress_callback:
-                await self.progress_callback("failed", str(e))
+            await self._call_progress_callback("failed", str(e))
 
             return TaskResult(
                 agent_id=self.agent_id,

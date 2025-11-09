@@ -1,0 +1,198 @@
+# Claude Code Configuration for Orchestrator Project
+
+# Hooks for safety-critical operations
+hooks:
+  pre-commit:
+    script: .claude/hooks/pre-commit.sh
+    enabled: true
+    description: "Validate architecture and check for secrets"
+
+  # Tool call safety checks
+  tool-call:
+    enabled: true
+    description: "Safety checks for database operations"
+    rules:
+      - pattern: "DROP TABLE|DELETE FROM|TRUNCATE"
+        action: confirm
+        message: "⚠️  Destructive database operation detected. Continue?"
+
+      - pattern: "ALTER TABLE.*DROP COLUMN"
+        action: confirm
+        message: "⚠️  Dropping column. This is irreversible. Continue?"
+
+      - pattern: "docker-compose down -v"
+        action: confirm
+        message: "⚠️  This will delete all volumes. Continue?"
+
+      - pattern: "rm -rf"
+        action: confirm
+        message: "⚠️  Recursive delete detected. Continue?"
+
+      - pattern: "git push.*--force"
+        action: block
+        message: "❌ Force push is not allowed. Use proper git workflows."
+
+# Permissions configuration
+permissions:
+  # Bash commands
+  bash:
+    allow:
+      # Testing
+      - pytest*
+      - mypy*
+      - ruff*
+      - black*
+
+      # Git operations (safe)
+      - git status*
+      - git diff*
+      - git log*
+      - git add*
+      - git commit*
+      - git push origin main
+      - git push origin v*
+      - git tag*
+      - git branch*
+
+      # Package management
+      - pip install*
+      - npm install*
+      - npm run*
+      - npm create*
+
+      # Docker (development)
+      - docker-compose up*
+      - docker-compose down
+      - docker-compose logs*
+      - docker-compose ps*
+      - docker-compose build*
+
+      # Database operations (read-only)
+      - sqlite3*SELECT*
+      - sqlite3*PRAGMA*
+
+      # Orchestrator CLI
+      - orchestrator*
+
+      # File operations
+      - ls*
+      - cat*
+      - grep*
+      - find*
+      - mkdir*
+      - touch*
+      - chmod*
+
+      # Process management
+      - lsof*
+      - curl*
+
+    deny:
+      # Dangerous git operations
+      - git push*--force*
+      - git reset --hard*
+      - git clean -fd*
+
+      # Dangerous Docker operations
+      - docker system prune*
+
+      # Destructive database operations
+      - sqlite3*DROP*
+      - sqlite3*DELETE*
+      - sqlite3*TRUNCATE*
+
+      # Dangerous file operations
+      - rm -rf /*
+      - rm -r /*
+
+    confirm:
+      # Database modifications
+      - alembic upgrade*
+      - alembic downgrade*
+      - sqlite3*ALTER TABLE*
+      - sqlite3*INSERT*
+      - sqlite3*UPDATE*
+
+      # Volume operations
+      - docker-compose down -v*
+
+  # File write operations
+  write:
+    allow:
+      # Source code
+      - src/**/*.py
+      - dashboard/**/*.py
+      - dashboard/**/*.ts
+      - dashboard/**/*.tsx
+      - dashboard/**/*.css
+
+      # Configuration
+      - .claude/**/*
+      - .env.example
+      - "*.md"
+      - pyproject.toml
+      - package.json
+      - tsconfig.json
+      - "*.yaml"
+      - "*.yml"
+
+      # Tests
+      - tests/**/*.py
+      - dashboard/backend/tests/**/*.py
+
+      # Build artifacts (temporary)
+      - dashboard/frontend/dist/**/*
+
+    deny:
+      # Sensitive files
+      - .env
+      - .git/**/*
+      - "**/*.db"
+      - "**/secrets*"
+      - ~/.ssh/**/*
+      - ~/.aws/**/*
+
+    confirm:
+      # Database migrations
+      - dashboard/backend/alembic/versions/*.py
+      - "**/migration*.sql"
+
+      # Docker configuration
+      - "**/Dockerfile"
+      - "**/docker-compose*.yml"
+
+  # File read operations (generally open)
+  read:
+    allow:
+      - "**/*"
+    deny:
+      - .env
+      - "**/secrets*"
+      - ~/.ssh/**/*
+      - ~/.aws/**/*
+
+# Project-specific settings
+project:
+  name: "Claude Multi-Agent Orchestrator"
+  version: "0.1.5"
+  working_directory: "/Volumes/Ext_SSD/Users/jeff/code/orchestrator"
+
+  # Common directories
+  directories:
+    src: "src/orchestrator"
+    tests: "tests"
+    dashboard_backend: "dashboard/backend"
+    dashboard_frontend: "dashboard/frontend"
+    docs: "."
+    logs_cli: "agent_logs"
+    logs_dashboard: "dashboard/backend/agent_logs"
+
+  # Common commands
+  commands:
+    test_core: "pytest tests/ -v --cov=orchestrator"
+    test_dashboard: "cd dashboard/backend && pytest tests/ -v"
+    type_check: "mypy src/orchestrator --ignore-missing-imports"
+    lint: "ruff check src/orchestrator dashboard/backend/app"
+    format: "black src/orchestrator dashboard/backend/app"
+    run_cli: "orchestrator execute"
+    run_dashboard: "cd dashboard && docker-compose up -d"

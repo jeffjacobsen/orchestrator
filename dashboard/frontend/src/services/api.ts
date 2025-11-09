@@ -102,19 +102,10 @@ export const agentApi = {
  */
 export const taskApi = {
   /**
-   * List all tasks.
+   * List all tasks with optional filtering, search, and sorting.
    */
-  list: async (params?: {
-    page?: number
-    page_size?: number
-    status?: string
-  }): Promise<TaskList> => {
-    const query = new URLSearchParams()
-    if (params?.page) query.set('page', params.page.toString())
-    if (params?.page_size) query.set('page_size', params.page_size.toString())
-    if (params?.status) query.set('status', params.status)
-
-    const queryString = query.toString()
+  list: async (params?: URLSearchParams): Promise<TaskList> => {
+    const queryString = params?.toString() || ''
     return apiRequest(`/api/v1/tasks${queryString ? `?${queryString}` : ''}`)
   },
 

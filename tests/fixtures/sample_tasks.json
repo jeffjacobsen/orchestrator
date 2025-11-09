@@ -1,0 +1,59 @@
+{
+  "simple_tasks": [
+    {
+      "prompt": "Write a function to calculate factorial",
+      "task_type": "feature_implementation",
+      "expected_complexity": "simple",
+      "expected_agents": ["planner", "builder"]
+    },
+    {
+      "prompt": "Add a simple validation check",
+      "task_type": "feature_implementation",
+      "expected_complexity": "simple",
+      "expected_agents": ["planner", "builder"]
+    },
+    {
+      "prompt": "Fix typo in variable name",
+      "task_type": "bug_fix",
+      "expected_complexity": "simple",
+      "expected_agents": ["planner", "builder"]
+    }
+  ],
+  "complex_tasks": [
+    {
+      "prompt": "Refactor the authentication system to support OAuth2 and SAML",
+      "task_type": "feature_implementation",
+      "expected_complexity": "complex",
+      "expected_agents": ["analyst", "planner", "builder", "tester", "reviewer"]
+    },
+    {
+      "prompt": "Investigate and fix the memory leak in the background worker",
+      "task_type": "bug_fix",
+      "expected_complexity": "complex",
+      "expected_agents": ["analyst", "planner", "builder", "tester", "reviewer"]
+    },
+    {
+      "prompt": "Analyze the codebase architecture and suggest improvements",
+      "task_type": "code_review",
+      "expected_complexity": "complex",
+      "expected_agents": ["analyst", "planner", "reviewer", "tester"]
+    }
+  ],
+  "edge_cases": [
+    {
+      "prompt": "",
+      "task_type": "auto",
+      "expected_error": "Empty prompt"
+    },
+    {
+      "prompt": "Task with invalid characters: \u0000\u0001\u0002",
+      "task_type": "auto",
+      "expected_complexity": "simple"
+    },
+    {
+      "prompt": "Very long prompt that exceeds normal limits. " + "Lorem ipsum dolor sit amet. " * 500,
+      "task_type": "auto",
+      "expected_complexity": "complex"
+    }
+  ]
+}

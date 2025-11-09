@@ -1,0 +1,62 @@
+{
+  "planner_response": {
+    "role": "assistant",
+    "content": "Based on the task, I'll create a simple implementation plan:\n\n1. Create a new function\n2. Add input validation\n3. Implement core logic\n4. Return result\n\nThis is a straightforward task requiring only basic implementation.",
+    "usage": {
+      "input_tokens": 150,
+      "output_tokens": 75
+    }
+  },
+  "builder_response": {
+    "role": "assistant",
+    "content": "I've implemented the requested function:\n\n```python\ndef calculate_factorial(n: int) -> int:\n    \"\"\"Calculate factorial of n.\"\"\"\n    if n < 0:\n        raise ValueError(\"n must be non-negative\")\n    if n == 0:\n        return 1\n    return n * calculate_factorial(n - 1)\n```\n\nThe function includes:\n- Input validation\n- Base case handling\n- Recursive implementation",
+    "usage": {
+      "input_tokens": 200,
+      "output_tokens": 120
+    }
+  },
+  "tester_response": {
+    "role": "assistant",
+    "content": "I've created tests for the factorial function:\n\n```python\ndef test_factorial_zero():\n    assert calculate_factorial(0) == 1\n\ndef test_factorial_positive():\n    assert calculate_factorial(5) == 120\n\ndef test_factorial_negative():\n    with pytest.raises(ValueError):\n        calculate_factorial(-1)\n```",
+    "usage": {
+      "input_tokens": 180,
+      "output_tokens": 90
+    }
+  },
+  "reviewer_response": {
+    "role": "assistant",
+    "content": "Code review findings:\n\n✅ Implementation follows the plan\n✅ Input validation is present\n✅ Tests cover happy path and edge cases\n✅ Code is well-documented\n\nNo issues found. Ready to merge.",
+    "usage": {
+      "input_tokens": 250,
+      "output_tokens": 60
+    }
+  },
+  "analyst_response": {
+    "role": "assistant",
+    "content": "Analysis of the codebase:\n\n## Current State\n- Authentication uses basic JWT tokens\n- No support for external identity providers\n- Session management is simple in-memory\n\n## Requirements for OAuth2/SAML\n- Need to add OAuth2 client library\n- Implement SAML assertion handling\n- Update session storage to support multiple auth methods\n\n## Recommended Approach\n1. Create abstraction layer for authentication\n2. Implement OAuth2 provider\n3. Implement SAML provider\n4. Update session management\n5. Add migration path for existing users",
+    "usage": {
+      "input_tokens": 300,
+      "output_tokens": 180
+    }
+  },
+  "error_responses": {
+    "rate_limit": {
+      "error": {
+        "type": "rate_limit_error",
+        "message": "Rate limit exceeded. Please try again in 60 seconds."
+      }
+    },
+    "invalid_request": {
+      "error": {
+        "type": "invalid_request_error",
+        "message": "Invalid request: prompt cannot be empty"
+      }
+    },
+    "overloaded": {
+      "error": {
+        "type": "overloaded_error",
+        "message": "The API is currently overloaded. Please try again later."
+      }
+    }
+  }
+}
