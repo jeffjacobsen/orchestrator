@@ -61,10 +61,7 @@ class ProgressTracker:
 
         # Create live display
         self.live = Live(
-            self._generate_display(),
-            console=self.console,
-            refresh_per_second=4,
-            transient=False
+            self._generate_display(), console=self.console, refresh_per_second=4, transient=False
         )
         self.live.start()
 
@@ -99,7 +96,7 @@ class ProgressTracker:
             layout_table,
             title="[bold cyan]Orchestrator Progress[/bold cyan]",
             subtitle=f"Elapsed: {elapsed}",
-            border_style="cyan"
+            border_style="cyan",
         )
 
     def _create_workflow_progress(self) -> Table:
@@ -132,11 +129,7 @@ class ProgressTracker:
             status_icon = self._get_status_icon(agent.get("status", AgentStatus.CREATED))
             activity = agent.get("current_activity", "Initializing...")
 
-            table.add_row(
-                agent.get("name", "Unknown"),
-                status_icon,
-                activity
-            )
+            table.add_row(agent.get("name", "Unknown"), status_icon, activity)
         else:
             table.add_row("[dim]No active agent[/dim]", "", "")
 
@@ -144,10 +137,12 @@ class ProgressTracker:
 
     def _create_metrics(self) -> str:
         """Create metrics summary."""
-        active_count = sum(1 for a in self.agents.values()
-                          if a.get("status") == AgentStatus.RUNNING)
-        completed_count = sum(1 for a in self.agents.values()
-                             if a.get("status") == AgentStatus.COMPLETED)
+        active_count = sum(
+            1 for a in self.agents.values() if a.get("status") == AgentStatus.RUNNING
+        )
+        completed_count = sum(
+            1 for a in self.agents.values() if a.get("status") == AgentStatus.COMPLETED
+        )
 
         return (
             f"[dim]Active: {active_count} | "
@@ -178,7 +173,7 @@ class ProgressTracker:
             "role": role,
             "status": AgentStatus.CREATED,
             "current_activity": "Starting...",
-            "created_at": time.time()
+            "created_at": time.time(),
         }
         self.current_agent_id = agent_id
         self.update()

@@ -46,7 +46,6 @@ End your response with a structured summary in this format:
 [What the next agent should focus on]
 
 Keep it concise. The next agent needs actionable info, not lengthy reports.""",
-
     AgentRole.PLANNER: """You are a specialized PLANNER agent focused on task decomposition and planning.
 
 Your responsibilities:
@@ -63,7 +62,6 @@ Best practices:
 
 NOTE: This is the traditional PLANNER role for task breakdown.
 For workflow design, see get_workflow_planner_prompt().""",
-
     AgentRole.BUILDER: """You are a specialized BUILDER agent focused on implementation and coding.
 
 Your responsibilities:
@@ -77,7 +75,6 @@ Best practices:
 - Write tests alongside implementation when appropriate
 - Use existing patterns in the codebase
 - Ask questions if requirements are unclear""",
-
     AgentRole.TESTER: """You are a specialized TESTER agent focused on testing and validation.
 
 Your responsibilities:
@@ -111,7 +108,6 @@ End your response with a structured summary:
 [Any issues found or recommendations]
 
 Be concise - focus on what was tested and results, not implementation details.""",
-
     AgentRole.REVIEWER: """You are a specialized REVIEWER agent focused on code review and quality assurance.
 
 Your responsibilities:
@@ -125,7 +121,6 @@ Best practices:
 - Verify the implementation matches the plan
 - Check for common antipatterns
 - Provide actionable, specific feedback""",
-
     AgentRole.DOCUMENTER: """You are a specialized DOCUMENTER agent focused on documentation writing.
 
 Your responsibilities:
@@ -159,7 +154,6 @@ End your response with a structured summary:
 - Files from previous agents that were documented
 
 Keep your summary brief - the actual documentation is in the files you created.""",
-
     AgentRole.ORCHESTRATOR: """You are the ORCHESTRATOR agent responsible for managing multi-agent workflows.
 
 Your responsibilities:
@@ -173,7 +167,6 @@ Best practices:
 - Protect your context window by using specialized agents
 - Choose the right workflow for task complexity
 - Monitor costs and efficiency""",
-
     AgentRole.CUSTOM: """You are a custom specialized agent.
 
 Your role and responsibilities are defined by your specific task.
@@ -347,7 +340,9 @@ def get_complexity_aware_analyst_prompt(complexity: str) -> str:
     base_prompt = ROLE_PROMPTS[AgentRole.ANALYST]
 
     if complexity == "simple":
-        return base_prompt + """
+        return (
+            base_prompt
+            + """
 
 COMPLEXITY: SIMPLE
 This task is straightforward. Your analysis should be:
@@ -356,9 +351,12 @@ This task is straightforward. Your analysis should be:
 - Provide a brief summary (< 200 words)
 - Skip deep investigation - surface-level analysis is sufficient
 - Remember: The goal is speed, not exhaustive research"""
+        )
 
     else:  # complex
-        return base_prompt + """
+        return (
+            base_prompt
+            + """
 
 COMPLEXITY: COMPLEX
 This task requires thorough analysis. Your analysis should:
@@ -367,6 +365,7 @@ This task requires thorough analysis. Your analysis should:
 - Review similar patterns and best practices
 - Provide detailed findings to inform planning
 - Take the time needed to understand the problem deeply"""
+        )
 
 
 def get_workflow_planner_prompt() -> str:

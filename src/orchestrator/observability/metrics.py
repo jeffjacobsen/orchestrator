@@ -24,11 +24,13 @@ class MetricsCollector:
 
     def record_event(self, event_type: str, data: Dict[str, Any]) -> None:
         """Record an event."""
-        self.events.append({
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "type": event_type,
-            "data": data,
-        })
+        self.events.append(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "type": event_type,
+                "data": data,
+            }
+        )
 
     def get_agent_metrics(self, agent_id: str) -> Optional[AgentMetrics]:
         """Get metrics for a specific agent."""
@@ -44,10 +46,7 @@ class MetricsCollector:
 
     def get_cost_by_agent(self) -> Dict[str, float]:
         """Get cost breakdown by agent."""
-        return {
-            agent_id: metrics.total_cost
-            for agent_id, metrics in self.agent_metrics.items()
-        }
+        return {agent_id: metrics.total_cost for agent_id, metrics in self.agent_metrics.items()}
 
     def get_files_consumed_and_produced(self) -> Dict[str, Any]:
         """
@@ -91,7 +90,4 @@ class MetricsCollector:
 
     def get_agent_timeline(self, agent_id: str) -> List[Dict[str, Any]]:
         """Get timeline of events for a specific agent."""
-        return [
-            e for e in self.events
-            if e.get("data", {}).get("agent_id") == agent_id
-        ]
+        return [e for e in self.events if e.get("data", {}).get("agent_id") == agent_id]

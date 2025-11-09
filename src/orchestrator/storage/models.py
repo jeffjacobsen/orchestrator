@@ -28,7 +28,7 @@ class TaskRecord(BaseModel):
     description: str
     task_type: str
     status: str
-    assigned_agents: str  # JSON array of agent IDs
+    assigned_agents: Optional[str] = None  # JSON array of agent IDs
     total_cost: float = 0.0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None

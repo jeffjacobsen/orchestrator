@@ -41,11 +41,14 @@ class AgentMonitor:
             model=agent.config.model,
         )
 
-        self.metrics.record_event("agent_created", {
-            "agent_id": agent.agent_id,
-            "name": agent.config.name,
-            "role": agent.config.role.value,
-        })
+        self.metrics.record_event(
+            "agent_created",
+            {
+                "agent_id": agent.agent_id,
+                "name": agent.config.name,
+                "role": agent.config.role.value,
+            },
+        )
 
     async def log_agent_deleted(self, agent: Agent) -> None:
         """Log agent deletion."""
@@ -57,10 +60,13 @@ class AgentMonitor:
             total_tokens=agent.metrics.total_tokens,
         )
 
-        self.metrics.record_event("agent_deleted", {
-            "agent_id": agent.agent_id,
-            "metrics": agent.metrics.model_dump(),
-        })
+        self.metrics.record_event(
+            "agent_deleted",
+            {
+                "agent_id": agent.agent_id,
+                "metrics": agent.metrics.model_dump(),
+            },
+        )
 
     async def log_status_change(
         self,
@@ -77,11 +83,14 @@ class AgentMonitor:
             new_status=new_status.value,
         )
 
-        self.metrics.record_event("status_change", {
-            "agent_id": agent.agent_id,
-            "old_status": old_status.value,
-            "new_status": new_status.value,
-        })
+        self.metrics.record_event(
+            "status_change",
+            {
+                "agent_id": agent.agent_id,
+                "old_status": old_status.value,
+                "new_status": new_status.value,
+            },
+        )
 
     async def log_task_completed(self, agent: Agent, task_description: str) -> None:
         """Log task completion."""
@@ -106,10 +115,13 @@ class AgentMonitor:
             error=error,
         )
 
-        self.metrics.record_event("error", {
-            "agent_id": agent.agent_id,
-            "error": error,
-        })
+        self.metrics.record_event(
+            "error",
+            {
+                "agent_id": agent.agent_id,
+                "error": error,
+            },
+        )
 
     async def start_monitoring(
         self,

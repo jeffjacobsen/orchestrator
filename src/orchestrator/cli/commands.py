@@ -30,11 +30,14 @@ def cli() -> None:
 
 @cli.command()
 @click.argument("prompt")
-@click.option("--task-type", default="auto", help="Task type (auto, feature_implementation, bug_fix, etc.)")
+@click.option(
+    "--task-type", default="auto", help="Task type (auto, feature_implementation, bug_fix, etc.)"
+)
 @click.option("--mode", default="sequential", type=click.Choice(["sequential", "parallel"]))
 @click.option("--no-cleanup", is_flag=True, help="Don't cleanup agents after completion")
 def execute(prompt: str, task_type: str, mode: str, no_cleanup: bool) -> None:
     """Execute a high-level task with the orchestrator."""
+
     async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=True)
 
@@ -85,6 +88,7 @@ def execute(prompt: str, task_type: str, mode: str, no_cleanup: bool) -> None:
 @cli.command()
 def status() -> None:
     """Show orchestrator status."""
+
     async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
@@ -104,6 +108,7 @@ def status() -> None:
 @click.option("--role", type=click.Choice([r.value for r in AgentRole]), help="Filter by role")
 def list_agents(role: Optional[str]) -> None:
     """List all active agents."""
+
     async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
@@ -146,6 +151,7 @@ def list_agents(role: Optional[str]) -> None:
 @cli.command()
 def list_tasks() -> None:
     """List all tasks."""
+
     async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
@@ -184,6 +190,7 @@ def list_tasks() -> None:
 @click.argument("task_id")
 def task_details(task_id: str) -> None:
     """Show details for a specific task."""
+
     async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
@@ -207,6 +214,7 @@ def task_details(task_id: str) -> None:
 @click.argument("agent_id")
 def agent_details(agent_id: str) -> None:
     """Show details for a specific agent."""
+
     async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
@@ -240,8 +248,9 @@ def init() -> None:
 
     # Optional configuration prompts
     db_path = click.prompt("Database path", default="./orchestrator.db")
-    log_level = click.prompt("Log level", default="INFO",
-                             type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
+    log_level = click.prompt(
+        "Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"])
+    )
     max_parallel = click.prompt("Max parallel agents", default=5, type=int)
     monitor_interval = click.prompt("Monitor interval (seconds)", default=15, type=int)
 
@@ -266,7 +275,7 @@ ENABLE_OBSERVABILITY=true
     Path(".env").write_text(env_content)
     console.print("\n[green]✓ Configuration saved to .env[/green]")
     console.print("\n[cyan]You can now use orchestrator commands:[/cyan]")
-    console.print("  orchestrator execute \"your task here\"")
+    console.print('  orchestrator execute "your task here"')
     console.print("  orchestrator status")
     console.print("  orchestrator list-agents")
 
@@ -276,6 +285,7 @@ ENABLE_OBSERVABILITY=true
 @click.option("--dry-run", is_flag=True, help="Show what would be deleted without deleting")
 def clean(older_than: Optional[int], dry_run: bool) -> None:
     """Clean up old agents and tasks from the database."""
+
     async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
@@ -285,7 +295,9 @@ def clean(older_than: Optional[int], dry_run: bool) -> None:
             tasks = orchestrator.list_tasks()
 
             # Filter based on status
-            completed_agents = [a for a in agents if a["status"] in ["completed", "failed", "deleted"]]
+            completed_agents = [
+                a for a in agents if a["status"] in ["completed", "failed", "deleted"]
+            ]
             completed_tasks = [t for t in tasks if t["status"] in ["completed", "failed"]]
 
             if dry_run:
@@ -317,11 +329,14 @@ def clean(older_than: Optional[int], dry_run: bool) -> None:
 
 
 @cli.command()
-@click.option("--format", type=click.Choice(["table", "json", "csv"]), default="table", help="Output format")
+@click.option(
+    "--format", type=click.Choice(["table", "json", "csv"]), default="table", help="Output format"
+)
 @click.option("--by-agent", is_flag=True, help="Show breakdown by agent")
 @click.option("--by-role", is_flag=True, help="Show breakdown by role")
 def cost_report(format: str, by_agent: bool, by_role: bool) -> None:
     """Generate a cost analysis report."""
+
     async def run() -> None:
         orchestrator = Orchestrator(enable_monitoring=False)
 
@@ -348,14 +363,18 @@ def cost_report(format: str, by_agent: bool, by_role: bool) -> None:
                 agent_table.add_column("Tokens", style="magenta", justify="right")
                 agent_table.add_column("Messages", style="yellow", justify="right")
 
-                for agent in sorted(agents, key=lambda a: float(a["metrics"]["total_cost"].replace("$", "")), reverse=True):
+                for agent in sorted(
+                    agents,
+                    key=lambda a: float(a["metrics"]["total_cost"].replace("$", "")),
+                    reverse=True,
+                ):
                     agent_table.add_row(
                         agent["agent_id"][:8],
                         agent["name"],
                         agent["role"],
                         agent["metrics"]["total_cost"],
                         f"{agent['metrics']['total_tokens']:,}",
-                        str(agent["metrics"]["messages_sent"])
+                        str(agent["metrics"]["messages_sent"]),
                     )
 
                 console.print(agent_table)
@@ -368,7 +387,7 @@ def cost_report(format: str, by_agent: bool, by_role: bool) -> None:
                 role_table.add_column("Role", style="blue")
                 role_table.add_column("Count", style="cyan", justify="right")
 
-                for role, count in status['fleet']['by_role'].items():
+                for role, count in status["fleet"]["by_role"].items():
                     if count > 0:
                         role_table.add_row(role, str(count))
 
@@ -376,7 +395,7 @@ def cost_report(format: str, by_agent: bool, by_role: bool) -> None:
 
             # File operations summary
             console.print("\n[cyan]File Operations:[/cyan]")
-            files = status['monitoring']['files']
+            files = status["monitoring"]["files"]
             console.print(f"Files consumed: {len(files['consumed'])}")
             console.print(f"Files produced: {len(files['produced'])}")
             console.print(f"Net files created: {files['net_files_created']}")
@@ -384,12 +403,19 @@ def cost_report(format: str, by_agent: bool, by_role: bool) -> None:
             # Export options
             if format == "json":
                 console.print("\n[cyan]JSON Export:[/cyan]")
-                console.print(JSON(json.dumps({
-                    "total_cost": status['fleet']['total_cost'],
-                    "total_tokens": status['fleet']['total_tokens'],
-                    "agents": agents,
-                    "by_role": status['fleet']['by_role']
-                }), indent=2))
+                console.print(
+                    JSON(
+                        json.dumps(
+                            {
+                                "total_cost": status["fleet"]["total_cost"],
+                                "total_tokens": status["fleet"]["total_tokens"],
+                                "agents": agents,
+                                "by_role": status["fleet"]["by_role"],
+                            }
+                        ),
+                        indent=2,
+                    )
+                )
             elif format == "csv":
                 console.print("\n[yellow]CSV export not yet implemented[/yellow]")
 

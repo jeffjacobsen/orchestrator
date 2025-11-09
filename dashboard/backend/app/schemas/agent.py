@@ -1,6 +1,7 @@
 """
 Agent Pydantic schemas for request/response validation.
 """
+
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field, model_validator
@@ -9,8 +10,11 @@ from app.models.agent import AgentStatus, AgentRole
 
 class AgentBase(BaseModel):
     """Base agent schema with common fields."""
+
     role: AgentRole = Field(..., description="Agent role")
-    custom_instructions: Optional[str] = Field(None, description="Custom instructions for the agent")
+    custom_instructions: Optional[str] = Field(
+        None, description="Custom instructions for the agent"
+    )
 
 
 class AgentCreate(AgentBase):
@@ -25,6 +29,7 @@ class AgentCreate(AgentBase):
         }
         ```
     """
+
     task_id: Optional[str] = Field(None, description="Associated task ID")
 
 
@@ -48,6 +53,7 @@ class AgentResponse(AgentBase):
         }
         ```
     """
+
     id: str = Field(..., description="Agent ID")
     status: AgentStatus = Field(..., description="Current agent status")
     task_id: Optional[str] = Field(None, description="Associated task ID")
@@ -62,7 +68,9 @@ class AgentResponse(AgentBase):
     cache_read_tokens: int = Field(0, description="Cache read tokens")
     total_cost: str = Field("$0.00", description="Total cost")
 
-    agent_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata", alias="metadata")
+    agent_metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata", alias="metadata"
+    )
 
     model_config = {
         "from_attributes": True,
@@ -70,15 +78,16 @@ class AgentResponse(AgentBase):
         "protected_namespaces": (),  # Disable protected namespace warnings
     }
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def extract_from_orm(cls, data: Any) -> Any:
         """Extract data from SQLAlchemy model, excluding internal attributes."""
-        if hasattr(data, '__dict__'):
+        if hasattr(data, "__dict__"):
             # It's a SQLAlchemy model, extract only our fields
             return {
-                key: value for key, value in data.__dict__.items()
-                if not key.startswith('_') and key != 'metadata'
+                key: value
+                for key, value in data.__dict__.items()
+                if not key.startswith("_") and key != "metadata"
             }
         return data
 
@@ -97,6 +106,7 @@ class AgentList(BaseModel):
         }
         ```
     """
+
     agents: List[AgentResponse] = Field(..., description="List of agents")
     total: int = Field(..., description="Total number of agents")
     page: int = Field(1, description="Current page number")

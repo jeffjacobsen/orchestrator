@@ -445,11 +445,7 @@ Your responsibilities:
 
     def get_active_agents(self) -> List[Agent]:
         """Get all active (non-deleted) agents."""
-        return [
-            agent
-            for agent in self.agents.values()
-            if agent.status != AgentStatus.DELETED
-        ]
+        return [agent for agent in self.agents.values() if agent.status != AgentStatus.DELETED]
 
     # UPDATE
     async def update_agent_status(
@@ -571,8 +567,7 @@ Your responsibilities:
                 for status in AgentStatus
             },
             "by_role": {
-                role.value: len([a for a in agents if a.config.role == role])
-                for role in AgentRole
+                role.value: len([a for a in agents if a.config.role == role]) for role in AgentRole
             },
             "total_cost": f"${self.get_total_cost():.4f}",
             "total_tokens": self.get_total_tokens(),

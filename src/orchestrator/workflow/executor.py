@@ -307,8 +307,11 @@ class WorkflowExecutor:
 
         for i, subtask in enumerate(task.subtasks):
             # Create progress callback for this agent
-            def make_progress_callback(agent_id: str, agent_name: str, agent_role: str) -> Callable[[str, str], Awaitable[None]]:
+            def make_progress_callback(
+                agent_id: str, agent_name: str, agent_role: str
+            ) -> Callable[[str, str], Awaitable[None]]:
                 """Create a progress callback for an agent."""
+
                 async def progress_callback(event: str, data: str) -> None:
                     if not self.progress_tracker:
                         return
@@ -320,7 +323,9 @@ class WorkflowExecutor:
                             await result
 
                     if event == "started":
-                        await call_method(self.progress_tracker.agent_created, agent_id, agent_name, agent_role)
+                        await call_method(
+                            self.progress_tracker.agent_created, agent_id, agent_name, agent_role
+                        )
                         await call_method(self.progress_tracker.agent_started, agent_id)
                     elif event == "thinking":
                         await call_method(self.progress_tracker.thinking, agent_id)
@@ -345,9 +350,7 @@ class WorkflowExecutor:
             # Set up progress callback
             if self.progress_tracker:
                 agent.progress_callback = make_progress_callback(
-                    agent.agent_id,
-                    agent.config.name,
-                    agent.config.role.value
+                    agent.agent_id, agent.config.name, agent.config.role.value
                 )
 
             task.assigned_agents.append(agent.agent_id)
@@ -373,10 +376,7 @@ class WorkflowExecutor:
 
             # Extract structured context from agent output
             if result.success and result.output:
-                agent_context = extract_structured_output(
-                    result.output,
-                    subtask["role"].value
-                )
+                agent_context = extract_structured_output(result.output, subtask["role"].value)
                 # Store for potential feedback loops or non-sequential access
                 self.agent_contexts[agent.agent_id] = agent_context
                 # Pass to next agent
@@ -766,9 +766,13 @@ class WorkflowExecutor:
             >>> # 3. Tasks following a logical pipeline
             >>> # 4. When order matters (analyze → plan → build → test → review)
         """
+
         # Create progress callback function
-        def make_progress_callback(agent_id: str, agent_name: str, agent_role: str) -> Callable[[str, str], Awaitable[None]]:
+        def make_progress_callback(
+            agent_id: str, agent_name: str, agent_role: str
+        ) -> Callable[[str, str], Awaitable[None]]:
             """Create a progress callback for an agent."""
+
             async def progress_callback(event: str, data: str) -> None:
                 if not self.progress_tracker:
                     return
@@ -780,7 +784,9 @@ class WorkflowExecutor:
                         await result
 
                 if event == "started":
-                    await call_method(self.progress_tracker.agent_created, agent_id, agent_name, agent_role)
+                    await call_method(
+                        self.progress_tracker.agent_created, agent_id, agent_name, agent_role
+                    )
                     await call_method(self.progress_tracker.agent_started, agent_id)
                 elif event == "thinking":
                     await call_method(self.progress_tracker.thinking, agent_id)
@@ -807,19 +813,14 @@ class WorkflowExecutor:
             # Set up progress callback
             if self.progress_tracker:
                 agent.progress_callback = make_progress_callback(
-                    agent.agent_id,
-                    agent.config.name,
-                    agent.config.role.value
+                    agent.agent_id, agent.config.name, agent.config.role.value
                 )
 
             agents.append((agent, subtask))
             task.assigned_agents.append(agent.agent_id)
 
         # Execute all tasks in parallel
-        tasks_to_execute = [
-            agent.execute_task(subtask["description"])
-            for agent, subtask in agents
-        ]
+        tasks_to_execute = [agent.execute_task(subtask["description"]) for agent, subtask in agents]
 
         results = await asyncio.gather(*tasks_to_execute, return_exceptions=True)
 
@@ -905,10 +906,7 @@ class WorkflowExecutor:
 
             # Extract structured context
             if result.success and result.output:
-                agent_context = extract_structured_output(
-                    result.output,
-                    subtask["role"].value
-                )
+                agent_context = extract_structured_output(result.output, subtask["role"].value)
                 contexts[index] = agent_context
                 self.agent_contexts[agent.agent_id] = agent_context
 
@@ -917,10 +915,7 @@ class WorkflowExecutor:
             return result
 
         # Execute all subtasks respecting dependencies
-        execution_tasks = [
-            execute_subtask(i)
-            for i in range(len(task.subtasks))
-        ]
+        execution_tasks = [execute_subtask(i) for i in range(len(task.subtasks))]
 
         await asyncio.gather(*execution_tasks)
 

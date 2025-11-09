@@ -6,6 +6,7 @@ This module provides WebSocket connections for real-time updates of:
 - Task progress updates
 - New agents/tasks created
 """
+
 from typing import Set
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.models.agent import Agent
@@ -42,33 +43,24 @@ class ConnectionManager:
         agent_data = AgentResponse.model_validate(agent)
         message = {
             "type": "agent_update",
-            "data": agent_data.model_dump(mode='json', by_alias=True)
+            "data": agent_data.model_dump(mode="json", by_alias=True),
         }
         await self._broadcast(message)
 
     async def broadcast_agent_deleted(self, agent_id: str):
         """Broadcast agent deletion to all connected clients."""
-        message = {
-            "type": "agent_deleted",
-            "data": {"id": agent_id}
-        }
+        message = {"type": "agent_deleted", "data": {"id": agent_id}}
         await self._broadcast(message)
 
     async def broadcast_task_update(self, task: Task):
         """Broadcast task update to all connected clients."""
         task_data = TaskResponse.model_validate(task)
-        message = {
-            "type": "task_update",
-            "data": task_data.model_dump(mode='json', by_alias=True)
-        }
+        message = {"type": "task_update", "data": task_data.model_dump(mode="json", by_alias=True)}
         await self._broadcast(message)
 
     async def broadcast_task_deleted(self, task_id: str):
         """Broadcast task deletion to all connected clients."""
-        message = {
-            "type": "task_deleted",
-            "data": {"id": task_id}
-        }
+        message = {"type": "task_deleted", "data": {"id": task_id}}
         await self._broadcast(message)
 
     async def _broadcast(self, message: dict):

@@ -1,6 +1,7 @@
 """
 Task API endpoints.
 """
+
 import logging
 import shutil
 from typing import Optional
@@ -43,7 +44,9 @@ async def list_tasks(
     cost_max: Optional[int] = Query(None, ge=0, description="Maximum total cost in cents"),
     duration_min: Optional[int] = Query(None, ge=0, description="Minimum duration in seconds"),
     duration_max: Optional[int] = Query(None, ge=0, description="Maximum duration in seconds"),
-    sort_by: str = Query("created_at", description="Sort field: created_at, updated_at, total_cost, duration_seconds"),
+    sort_by: str = Query(
+        "created_at", description="Sort field: created_at, updated_at, total_cost, duration_seconds"
+    ),
     sort_order: str = Query("desc", description="Sort order: asc or desc"),
 ) -> TaskList:
     """
@@ -69,7 +72,7 @@ async def list_tasks(
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid date_from format: {date_from}. Use YYYY-MM-DD"
+                detail=f"Invalid date_from format: {date_from}. Use YYYY-MM-DD",
             )
 
     if date_to:
@@ -81,7 +84,7 @@ async def list_tasks(
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid date_to format: {date_to}. Use YYYY-MM-DD"
+                detail=f"Invalid date_to format: {date_to}. Use YYYY-MM-DD",
             )
 
     # Cost filtering
@@ -107,7 +110,7 @@ async def list_tasks(
         "created_at": Task.created_at,
         "updated_at": Task.updated_at,
         "total_cost": Task.total_cost,
-        "duration_seconds": Task.duration_seconds
+        "duration_seconds": Task.duration_seconds,
     }
     sort_field = valid_sort_fields.get(sort_by, Task.created_at)
 
@@ -256,10 +259,7 @@ async def create_task(
         else:
             # Resolve absolute path to orchestrator root
             working_dir = os.path.abspath(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    settings.orchestrator_working_directory
-                )
+                os.path.join(os.path.dirname(__file__), settings.orchestrator_working_directory)
             )
 
         async with async_session_maker() as bg_db:
@@ -371,14 +371,18 @@ async def get_task_planner_logs(
             # Find the planner directory in this task's logs
             # Check for both "Workflow_Planner" (old name) and "Planner_Agent" (new name)
             for dir_path in task_log_dir.iterdir():
-                if dir_path.is_dir() and ("Workflow_Planner" in dir_path.name or "Planner_Agent" in dir_path.name):
+                if dir_path.is_dir() and (
+                    "Workflow_Planner" in dir_path.name or "Planner_Agent" in dir_path.name
+                ):
                     planner_log_dir = dir_path
                     break
         else:
             # Fallback: search all directories (for logs created before task_id structure)
             # This is for backward compatibility with old log structure
             for dir_path in logs_base_dir.iterdir():
-                if dir_path.is_dir() and ("Workflow_Planner" in dir_path.name or "Planner_Agent" in dir_path.name):
+                if dir_path.is_dir() and (
+                    "Workflow_Planner" in dir_path.name or "Planner_Agent" in dir_path.name
+                ):
                     planner_log_dir = dir_path
                     break
 

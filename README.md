@@ -476,15 +476,45 @@ ENABLE_OBSERVABILITY=true
 
 ## Testing
 
+### Test Structure
+
+The project has comprehensive test coverage organized into two main suites:
+
+```
+tests/                           → 270 tests (core orchestrator - 64% coverage)
+  ├── integration/               → Integration tests
+  ├── test_analyst_workflow...   → Workflow selection tests
+  ├── test_cli.py                → CLI command tests
+  ├── test_database.py           → Storage layer tests
+  └── test_*.py                  → Unit tests for all modules
+
+dashboard/backend/tests/         → 19 tests (dashboard utilities)
+  └── test_directory_validation.py → Directory validation tests
+
+examples/                        → Example scripts (not pytest tests)
+  └── manual_integration_test.py → Manual integration testing
+```
+
+### Running Tests
+
 ```bash
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run tests
-pytest
+# Run all tests (core + dashboard)
+pytest && pytest dashboard/backend/tests
 
-# Run with coverage
-pytest --cov=orchestrator --cov-report=html
+# Run only core orchestrator tests
+pytest tests/
+
+# Run only dashboard tests
+pytest dashboard/backend/tests/
+
+# Run with coverage (core only)
+pytest --cov=src/orchestrator --cov-report=html
+
+# Run with coverage (dashboard only)
+pytest dashboard/backend/tests --cov=dashboard/backend/app
 
 # Type checking
 mypy src/orchestrator
@@ -492,7 +522,24 @@ mypy src/orchestrator
 # Linting
 ruff check src/orchestrator
 black --check src/orchestrator
+
+# Full test suite (includes type checking and linting)
+pytest && mypy src/orchestrator && ruff check src/orchestrator
 ```
+
+### Manual Integration Testing
+
+For testing with actual Claude API calls (requires API key):
+
+```bash
+# Set API key
+export ANTHROPIC_API_KEY=your_key_here
+
+# Run manual integration test
+python examples/manual_integration_test.py
+```
+
+**Note**: Unit tests use mocks and don't require an API key. Only run manual integration tests when you need to verify actual API behavior.
 
 ## Best Practices
 

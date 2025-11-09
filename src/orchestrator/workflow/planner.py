@@ -480,7 +480,9 @@ class TaskPlanner:
 
         # If no template found, use a sensible default based on complexity
         if template is None:
-            logger.warning(f"No template found for task_type='{template_key}', using default workflow")
+            logger.warning(
+                f"No template found for task_type='{template_key}', using default workflow"
+            )
             # Default to feature_implementation workflow for custom tasks
             if complexity == "simple":
                 template = self.planning_templates["simple_implementation"]
@@ -489,11 +491,13 @@ class TaskPlanner:
 
         subtasks = []
         for step in template:
-            subtasks.append({
-                "role": step["role"],
-                "description": f"{step['task']}: {description}",
-                "context": description,
-            })
+            subtasks.append(
+                {
+                    "role": step["role"],
+                    "description": f"{step['task']}: {description}",
+                    "context": description,
+                }
+            )
 
         return OrchestratorTask(
             task_id=task_id,
@@ -596,15 +600,17 @@ Respond with ONLY valid JSON (no markdown, no explanation)."""
                 logger.warning(f"Unknown agent role: {step['agent_role']}, skipping")
                 continue
 
-            subtasks.append({
-                "role": agent_role,
-                "description": f"{step['scope']}: {description}",
-                "context": description,
-                "constraints": step.get("constraints", []),
-                "estimated_tokens": step.get("estimated_tokens", 0),
-                "execution_mode": step.get("execution_mode", "sequential"),
-                "depends_on": step.get("depends_on", []),
-            })
+            subtasks.append(
+                {
+                    "role": agent_role,
+                    "description": f"{step['scope']}: {description}",
+                    "context": description,
+                    "constraints": step.get("constraints", []),
+                    "estimated_tokens": step.get("estimated_tokens", 0),
+                    "execution_mode": step.get("execution_mode", "sequential"),
+                    "depends_on": step.get("depends_on", []),
+                }
+            )
 
         return OrchestratorTask(
             task_id=task_id,

@@ -4,6 +4,7 @@ Orchestrator execution service.
 This module integrates the orchestrator execution engine with the dashboard,
 allowing tasks to be executed via the API.
 """
+
 import logging
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -151,14 +152,15 @@ class OrchestratorExecutor:
         """
         from sqlalchemy import select
 
-        try:
-            # Get task from database
-            result = await self.db.execute(select(Task).where(Task.id == task_id))
-            task = result.scalar_one_or_none()
+        # Get task from database first (outside try block to ensure it's always available)
+        result = await self.db.execute(select(Task).where(Task.id == task_id))
+        task = result.scalar_one_or_none()
 
-            if not task:
-                logger.error(f"Task not found: {task_id}")
-                return
+        if not task:
+            logger.error(f"Task not found: {task_id}")
+            return
+
+        try:
 
             # Update task status to in_progress
             task.status = TaskStatus.IN_PROGRESS
@@ -190,9 +192,7 @@ class OrchestratorExecutor:
             monitor = AgentMonitor()
             progress_tracker = DashboardProgressTracker(db=self.db, task_id=task.id)
             executor = WorkflowExecutor(
-                agent_manager=agent_manager,
-                monitor=monitor,
-                progress_tracker=progress_tracker
+                agent_manager=agent_manager, monitor=monitor, progress_tracker=progress_tracker
             )
             planner = TaskPlanner(
                 working_directory=task.working_directory,
@@ -209,7 +209,9 @@ class OrchestratorExecutor:
 
             # Store workflow in task (subtasks are dicts with "role" key)
             # Convert orchestrator roles (lowercase) to dashboard format (uppercase for display)
-            task.workflow = [subtask["role"].value.upper() for subtask in orchestrator_task.subtasks]
+            task.workflow = [
+                subtask["role"].value.upper() for subtask in orchestrator_task.subtasks
+            ]
             await self.db.commit()
             await manager.broadcast_task_update(task)
 
@@ -254,7 +256,7 @@ class OrchestratorExecutor:
                     await manager.broadcast_agent_update(agent)
 
                 # Aggregate duration from result metrics
-                if result.metrics and hasattr(result.metrics, 'execution_time_seconds'):
+                if result.metrics and hasattr(result.metrics, "execution_time_seconds"):
                     total_task_duration += int(result.metrics.execution_time_seconds)
 
             # Calculate total task duration from start to completion
@@ -300,10 +302,7 @@ async def execute_task_background(task_id: str, db_url: str, working_directory: 
 
     async with async_session() as session:
         # Get task
-        result = await session.execute(
-            "SELECT * FROM tasks WHERE id = :id",
-            {"id": task_id}
-        )
+        result = await session.execute("SELECT * FROM tasks WHERE id = :id", {"id": task_id})
         task = result.scalar_one_or_none()
 
         if not task:

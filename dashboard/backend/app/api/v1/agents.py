@@ -1,6 +1,7 @@
 """
 Agent API endpoints.
 """
+
 from typing import Optional
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -123,6 +124,7 @@ async def create_agent(
     """
     # Generate agent ID
     import uuid
+
     agent_id = str(uuid.uuid4())
 
     # Create agent

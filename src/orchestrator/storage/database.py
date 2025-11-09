@@ -41,7 +41,8 @@ class Database:
 
     async def _create_tables(self) -> None:
         """Create database tables."""
-        await self.conn.execute("""
+        await self.conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS agents (
                 agent_id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -55,9 +56,11 @@ class Database:
                 completed_at TEXT,
                 deleted_at TEXT
             )
-        """)
+        """
+        )
 
-        await self.conn.execute("""
+        await self.conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS tasks (
                 task_id TEXT PRIMARY KEY,
                 description TEXT NOT NULL,
@@ -69,7 +72,8 @@ class Database:
                 completed_at TEXT,
                 result TEXT
             )
-        """)
+        """
+        )
 
         await self.conn.commit()
 
@@ -221,13 +225,109 @@ class Database:
             result=row[8],
         )
 
+    # Agent update operations
+
+    async def update_agent(
+        self,
+        agent_id: str,
+        status: Optional[str] = None,
+        total_cost: Optional[float] = None,
+        total_tokens: Optional[int] = None,
+        messages_sent: Optional[int] = None,
+    ) -> None:
+        """Update specific fields of an agent record."""
+        updates = []
+        params = []
+
+        if status is not None:
+            updates.append("status = ?")
+            params.append(status)
+
+        if total_cost is not None:
+            updates.append("total_cost = ?")
+            params.append(total_cost)
+
+        if total_tokens is not None:
+            updates.append("total_tokens = ?")
+            params.append(total_tokens)
+
+        if messages_sent is not None:
+            updates.append("messages_sent = ?")
+            params.append(messages_sent)
+
+        if not updates:
+            return
+
+        params.append(agent_id)
+        query = f"UPDATE agents SET {', '.join(updates)} WHERE agent_id = ?"
+
+        await self.conn.execute(query, params)
+        await self.conn.commit()
+
+    async def delete_agent(self, agent_id: str) -> None:
+        """Soft-delete an agent by setting deleted_at timestamp."""
+        from datetime import timezone
+        await self.conn.execute(
+            "UPDATE agents SET deleted_at = ? WHERE agent_id = ?",
+            (datetime.now(timezone.utc).isoformat(), agent_id),
+        )
+        await self.conn.commit()
+
+    # Task update operations
+
+    async def update_task(
+        self,
+        task_id: str,
+        status: Optional[str] = None,
+        total_cost: Optional[float] = None,
+        result: Optional[str] = None,
+    ) -> None:
+        """Update specific fields of a task record."""
+        updates = []
+        params = []
+
+        if status is not None:
+            updates.append("status = ?")
+            params.append(status)
+
+        if total_cost is not None:
+            updates.append("total_cost = ?")
+            params.append(total_cost)
+
+        if result is not None:
+            updates.append("result = ?")
+            params.append(result)
+
+        # Auto-set completed_at if status is completed
+        if status == "completed":
+            from datetime import timezone
+            updates.append("completed_at = ?")
+            params.append(datetime.now(timezone.utc).isoformat())
+
+        if not updates:
+            return
+
+        params.append(task_id)
+        query = f"UPDATE tasks SET {', '.join(updates)} WHERE task_id = ?"
+
+        await self.conn.execute(query, params)
+        await self.conn.commit()
+
+    # Query helpers
+
+    async def get_agents_by_role(self, role: str) -> List[AgentRecord]:
+        """Get all agents with a specific role."""
+        return await self.list_agents(role=role)
+
+    async def get_tasks_by_status(self, status: str) -> List[TaskRecord]:
+        """Get all tasks with a specific status."""
+        return await self.list_tasks(status=status)
+
     # Analytics
 
     async def get_total_cost(self) -> float:
-        """Get total cost across all tasks."""
-        cursor = await self.conn.execute(
-            "SELECT SUM(total_cost) FROM tasks"
-        )
+        """Get total cost across all agents."""
+        cursor = await self.conn.execute("SELECT SUM(total_cost) FROM agents")
         row = await cursor.fetchone()
         return row[0] if row and row[0] else 0.0
 

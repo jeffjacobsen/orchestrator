@@ -1,6 +1,7 @@
 """
 Common Pydantic schemas.
 """
+
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -29,6 +30,7 @@ class ErrorResponse(BaseModel):
         }
         ```
     """
+
     code: str = Field(..., description="Machine-readable error code")
     message: str = Field(..., description="Human-readable error message")
     details: dict = Field(default_factory=dict, description="Additional error context")
@@ -36,16 +38,14 @@ class ErrorResponse(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
 
     model_config = {
-        "json_encoders": {
-            datetime: lambda v: v.isoformat()
-        },
+        "json_encoders": {datetime: lambda v: v.isoformat()},
         "json_schema_extra": {
             "example": {
                 "code": "AGENT_NOT_FOUND",
                 "message": "Agent with ID abc-123 not found",
                 "details": {"agent_id": "abc-123"},
                 "request_id": "req-456",
-                "timestamp": "2025-11-05T12:34:56Z"
+                "timestamp": "2025-11-05T12:34:56Z",
             }
-        }
+        },
     }

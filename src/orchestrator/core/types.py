@@ -49,7 +49,7 @@ class AgentMetrics(BaseModel):
     input_tokens: int = 0
     output_tokens: int = 0
     cache_creation_input_tokens: int = 0  # Tokens used to create cache
-    cache_read_input_tokens: int = 0      # Tokens read from cache
+    cache_read_input_tokens: int = 0  # Tokens read from cache
     total_cost: float = 0.0
     tool_calls: int = 0
     messages_sent: int = 0

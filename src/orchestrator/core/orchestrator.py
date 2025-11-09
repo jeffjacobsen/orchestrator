@@ -6,7 +6,13 @@ from typing import Optional, List, Dict, Any
 from pathlib import Path
 
 from orchestrator.core.agent_manager import AgentManager
-from orchestrator.core.types import AgentRole, AgentMetrics, AgentStatus, OrchestratorTask, TaskResult
+from orchestrator.core.types import (
+    AgentRole,
+    AgentMetrics,
+    AgentStatus,
+    OrchestratorTask,
+    TaskResult,
+)
 from orchestrator.workflow.planner import TaskPlanner
 from orchestrator.workflow.executor import WorkflowExecutor
 from orchestrator.observability.monitor import AgentMonitor
@@ -427,7 +433,9 @@ class Orchestrator:
                 total_metrics.total_tokens += result.metrics.total_tokens
                 total_metrics.input_tokens += result.metrics.input_tokens
                 total_metrics.output_tokens += result.metrics.output_tokens
-                total_metrics.cache_creation_input_tokens += result.metrics.cache_creation_input_tokens
+                total_metrics.cache_creation_input_tokens += (
+                    result.metrics.cache_creation_input_tokens
+                )
                 total_metrics.cache_read_input_tokens += result.metrics.cache_read_input_tokens
                 total_metrics.total_cost += result.metrics.total_cost
                 total_metrics.tool_calls += result.metrics.tool_calls
@@ -506,10 +514,7 @@ class Orchestrator:
 
     def list_agents(self) -> List[Dict[str, Any]]:
         """List all active agents with details."""
-        return [
-            agent.get_summary()
-            for agent in self.agent_manager.get_active_agents()
-        ]
+        return [agent.get_summary() for agent in self.agent_manager.get_active_agents()]
 
     # Manual agent control (for advanced use)
 

@@ -45,7 +45,7 @@ class AgentLogger:
         agent_name: str,
         log_dir: str = "./agent_logs",
         enabled: bool = True,
-        task_id: Optional[str] = None
+        task_id: Optional[str] = None,
     ):
         """
         Initialize agent logger.
@@ -144,13 +144,16 @@ class AgentLogger:
     def _log_tool_use(self, block: ToolUseBlock) -> None:
         """Log tool use call"""
         with open(self.tool_file, "a") as f:
-            json.dump({
-                "timestamp": datetime.now().isoformat(),
-                "type": "tool_use",
-                "tool_name": block.name,
-                "tool_use_id": block.id,
-                "input": block.input
-            }, f)
+            json.dump(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "type": "tool_use",
+                    "tool_name": block.name,
+                    "tool_use_id": block.id,
+                    "input": block.input,
+                },
+                f,
+            )
             f.write("\n")
 
     def _log_tool_result(self, block: ToolResultBlock) -> None:
@@ -163,41 +166,50 @@ class AgentLogger:
             elif not isinstance(content, str):
                 content = str(content)[:2000]
 
-            json.dump({
-                "timestamp": datetime.now().isoformat(),
-                "type": "tool_result",
-                "tool_use_id": block.tool_use_id,
-                "content": content,
-                "is_error": block.is_error
-            }, f)
+            json.dump(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "type": "tool_result",
+                    "tool_use_id": block.tool_use_id,
+                    "content": content,
+                    "is_error": block.is_error,
+                },
+                f,
+            )
             f.write("\n")
 
     def _log_system_message(self, message: SystemMessage) -> None:
         """Log system message"""
         with open(self.summary_file, "a") as f:
-            json.dump({
-                "timestamp": datetime.now().isoformat(),
-                "type": "SystemMessage",
-                "subtype": message.subtype,
-                "message": str(message)
-            }, f)
+            json.dump(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "type": "SystemMessage",
+                    "subtype": message.subtype,
+                    "message": str(message),
+                },
+                f,
+            )
             f.write("\n")
 
     def _log_result_message(self, message: ResultMessage) -> None:
         """Log final result message with metrics"""
         with open(self.summary_file, "a") as f:
-            json.dump({
-                "timestamp": datetime.now().isoformat(),
-                "type": "ResultMessage",
-                "is_error": message.is_error,
-                "result": message.result,
-                "duration_ms": message.duration_ms,
-                "num_turns": message.num_turns,
-                "session_id": message.session_id,
-                "total_cost_usd": message.total_cost_usd,
-                "usage": message.usage,
-                "total_messages_processed": self.message_count
-            }, f)
+            json.dump(
+                {
+                    "timestamp": datetime.now().isoformat(),
+                    "type": "ResultMessage",
+                    "is_error": message.is_error,
+                    "result": message.result,
+                    "duration_ms": message.duration_ms,
+                    "num_turns": message.num_turns,
+                    "session_id": message.session_id,
+                    "total_cost_usd": message.total_cost_usd,
+                    "usage": message.usage,
+                    "total_messages_processed": self.message_count,
+                },
+                f,
+            )
             f.write("\n")
 
     def get_log_path(self) -> Optional[Path]:

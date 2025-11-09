@@ -5,11 +5,12 @@ description: Run complete test suite (core + dashboard + type checks)
 Run the complete test suite for the orchestrator project.
 
 **Current Status**:
-- Core orchestrator: 199 tests, 51% coverage
-- Dashboard backend: 35 tests, 100% pass rate
+- Core orchestrator: 270 tests, 64% coverage ✨
+- Dashboard backend: 19 tests, 100% passing ✅
 - Type hints: 100% coverage on public APIs
+- Storage layer: 95% coverage (was 0%)
 
-**Priority**: Improve core orchestrator coverage from 51% → 80% target
+**Priority**: Improve core orchestrator coverage from 64% → 80% target
 
 ---
 
@@ -37,10 +38,10 @@ pytest tests/ -v --cov=src/orchestrator --cov-report=term-missing
 ### 2. Dashboard Backend Tests
 
 ```bash
-cd dashboard/backend && pytest tests/ -v && cd ../..
+pytest dashboard/backend/tests -v
 ```
 
-**Expected**: 35 tests passing (working directory validation)
+**Expected**: 19 tests passing (directory validation utilities)
 
 ### 3. Type Checking
 
@@ -66,9 +67,9 @@ black --check src/orchestrator dashboard/backend/app
 After running all tests, report:
 
 1. **Test Results**:
-   - Core: X/199 passed
-   - Dashboard: X/35 passed
-   - Total: X/234 tests
+   - Core: X/270 passed
+   - Dashboard: X/19 passed
+   - Total: X/289 tests
 
 2. **Coverage**:
    - Current: X%

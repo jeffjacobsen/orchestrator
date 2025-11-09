@@ -1,6 +1,7 @@
 """
 Agent database model.
 """
+
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, DateTime, Enum as SQLEnum, JSON, Integer
 from app.core.database import Base
@@ -9,6 +10,7 @@ import enum
 
 class AgentStatus(str, enum.Enum):
     """Agent status enum."""
+
     ACTIVE = "active"
     IDLE = "idle"
     COMPLETED = "completed"
@@ -17,6 +19,7 @@ class AgentStatus(str, enum.Enum):
 
 class AgentRole(str, enum.Enum):
     """Agent role enum matching orchestrator types."""
+
     ANALYST = "ANALYST"
     PLANNER = "PLANNER"
     BUILDER = "BUILDER"
@@ -30,6 +33,7 @@ class Agent(Base):
     """
     Agent model representing a Claude agent instance.
     """
+
     __tablename__ = "agents"
 
     # Primary identification
@@ -42,7 +46,12 @@ class Agent(Base):
 
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     completed_at = Column(DateTime, nullable=True)
 
     # Configuration

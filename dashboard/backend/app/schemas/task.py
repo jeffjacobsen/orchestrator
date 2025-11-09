@@ -1,6 +1,7 @@
 """
 Task Pydantic schemas for request/response validation.
 """
+
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field, model_validator
@@ -9,6 +10,7 @@ from app.models.task import TaskStatus, TaskType
 
 class TaskBase(BaseModel):
     """Base task schema with common fields."""
+
     description: str = Field(..., description="Task description", min_length=1)
     task_type: TaskType = Field(..., description="Task type")
 
@@ -27,9 +29,16 @@ class TaskCreate(TaskBase):
         }
         ```
     """
-    include_analyst: Optional[str] = Field("auto", description="Include ANALYST: 'yes', 'no', or 'auto'")
-    working_directory: Optional[str] = Field(None, description="Working directory for task execution")
-    task_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata", alias="metadata")
+
+    include_analyst: Optional[str] = Field(
+        "auto", description="Include ANALYST: 'yes', 'no', or 'auto'"
+    )
+    working_directory: Optional[str] = Field(
+        None, description="Working directory for task execution"
+    )
+    task_metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata", alias="metadata"
+    )
 
 
 class TaskResponse(TaskBase):
@@ -51,6 +60,7 @@ class TaskResponse(TaskBase):
         }
         ```
     """
+
     id: str = Field(..., description="Task ID")
     status: TaskStatus = Field(..., description="Current task status")
 
@@ -62,7 +72,9 @@ class TaskResponse(TaskBase):
     current_step: Optional[int] = Field(None, description="Current workflow step index (0-based)")
     complexity: Optional[str] = Field(None, description="Task complexity: 'simple' or 'complex'")
     include_analyst: Optional[str] = Field(None, description="ANALYST inclusion setting")
-    working_directory: Optional[str] = Field(None, description="Working directory for task execution")
+    working_directory: Optional[str] = Field(
+        None, description="Working directory for task execution"
+    )
 
     total_cost: Optional[int] = Field(None, description="Total cost in cents (USD)")
     duration_seconds: Optional[int] = Field(None, description="Total execution time in seconds")
@@ -70,7 +82,9 @@ class TaskResponse(TaskBase):
     result: Optional[str] = Field(None, description="Task result")
     error: Optional[str] = Field(None, description="Error message if failed")
 
-    task_metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata", alias="metadata")
+    task_metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata", alias="metadata"
+    )
 
     model_config = {
         "from_attributes": True,
@@ -78,15 +92,16 @@ class TaskResponse(TaskBase):
         "protected_namespaces": (),  # Disable protected namespace warnings
     }
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def extract_from_orm(cls, data: Any) -> Any:
         """Extract data from SQLAlchemy model, excluding internal attributes."""
-        if hasattr(data, '__dict__'):
+        if hasattr(data, "__dict__"):
             # It's a SQLAlchemy model, extract only our fields
             return {
-                key: value for key, value in data.__dict__.items()
-                if not key.startswith('_') and key != 'metadata'
+                key: value
+                for key, value in data.__dict__.items()
+                if not key.startswith("_") and key != "metadata"
             }
         return data
 
@@ -105,6 +120,7 @@ class TaskList(BaseModel):
         }
         ```
     """
+
     tasks: List[TaskResponse] = Field(..., description="List of tasks")
     total: int = Field(..., description="Total number of tasks")
     page: int = Field(1, description="Current page number")

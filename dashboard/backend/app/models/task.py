@@ -1,6 +1,7 @@
 """
 Task database model.
 """
+
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, DateTime, Enum as SQLEnum, JSON, Text, Integer
 from app.core.database import Base
@@ -9,6 +10,7 @@ import enum
 
 class TaskStatus(str, enum.Enum):
     """Task status enum."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -17,6 +19,7 @@ class TaskStatus(str, enum.Enum):
 
 class TaskType(str, enum.Enum):
     """Task type enum matching orchestrator task types."""
+
     FEATURE_IMPLEMENTATION = "feature_implementation"
     BUG_FIX = "bug_fix"
     CODE_REVIEW = "code_review"
@@ -32,6 +35,7 @@ class Task(Base):
     """
     Task model representing a high-level task executed by agents.
     """
+
     __tablename__ = "tasks"
 
     # Primary identification
@@ -41,8 +45,15 @@ class Task(Base):
     status = Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.PENDING, index=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
-    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(
+        DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True
+    )
+    updated_at = Column(
+        DateTime,
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
     completed_at = Column(DateTime, nullable=True)
 
     # Workflow configuration
@@ -53,8 +64,12 @@ class Task(Base):
     working_directory = Column(String, nullable=True)  # Working directory for task execution
 
     # Metrics (aggregated from all agents)
-    total_cost = Column(Integer, nullable=True, default=0, index=True)  # Total cost in USD (stored as cents to avoid float issues)
-    duration_seconds = Column(Integer, nullable=True, default=0, index=True)  # Total execution time in seconds
+    total_cost = Column(
+        Integer, nullable=True, default=0, index=True
+    )  # Total cost in USD (stored as cents to avoid float issues)
+    duration_seconds = Column(
+        Integer, nullable=True, default=0, index=True
+    )  # Total execution time in seconds
 
     # Results
     result = Column(Text, nullable=True)

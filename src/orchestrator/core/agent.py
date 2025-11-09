@@ -40,7 +40,9 @@ class Agent:
         agent_id: str,
         config: AgentConfig,
         enable_logging: bool = True,
-        progress_callback: Optional[Union[Callable[[str, str], None], Callable[[str, str], Awaitable[None]]]] = None,
+        progress_callback: Optional[
+            Union[Callable[[str, str], None], Callable[[str, str], Awaitable[None]]]
+        ] = None,
     ) -> None:
         self.agent_id = agent_id
         self.config = config
@@ -60,11 +62,12 @@ class Agent:
 
         # File logging - lazy import to avoid circular dependency
         from orchestrator.observability.agent_logger import AgentLogger
+
         self.logger = AgentLogger(
             agent_id=agent_id,
             agent_name=config.name,
             enabled=enable_logging,
-            task_id=config.task_id
+            task_id=config.task_id,
         )
 
     async def _call_progress_callback(self, event: str, data: str = "") -> None:
@@ -125,7 +128,7 @@ class Agent:
                     # Extract final metrics from SDK
                     self._update_metrics_from_result(message)
                     # Save session ID for future conversations
-                    if hasattr(message, 'session_id'):
+                    if hasattr(message, "session_id"):
                         self.config.session_id = message.session_id
 
             self.metrics.messages_sent += 1
@@ -198,7 +201,7 @@ class Agent:
 
             elif isinstance(msg, ResultMessage):
                 self._update_metrics_from_result(msg)
-                if hasattr(msg, 'session_id'):
+                if hasattr(msg, "session_id"):
                     self.config.session_id = msg.session_id
 
         self.metrics.messages_sent += 1
@@ -208,31 +211,31 @@ class Agent:
     def _update_metrics_from_result(self, result: ResultMessage) -> None:
         """Update metrics from SDK ResultMessage."""
         # SDK provides accurate token counts via result.usage (dict)
-        if hasattr(result, 'usage') and result.usage:
+        if hasattr(result, "usage") and result.usage:
             usage = result.usage
 
             # Track input/output tokens (usage is a dict)
-            if 'input_tokens' in usage:
-                self.metrics.input_tokens += usage['input_tokens']
-            if 'output_tokens' in usage:
-                self.metrics.output_tokens += usage['output_tokens']
+            if "input_tokens" in usage:
+                self.metrics.input_tokens += usage["input_tokens"]
+            if "output_tokens" in usage:
+                self.metrics.output_tokens += usage["output_tokens"]
 
             # Track cache tokens
-            if 'cache_creation_input_tokens' in usage:
-                self.metrics.cache_creation_input_tokens += usage['cache_creation_input_tokens']
-            if 'cache_read_input_tokens' in usage:
-                self.metrics.cache_read_input_tokens += usage['cache_read_input_tokens']
+            if "cache_creation_input_tokens" in usage:
+                self.metrics.cache_creation_input_tokens += usage["cache_creation_input_tokens"]
+            if "cache_read_input_tokens" in usage:
+                self.metrics.cache_read_input_tokens += usage["cache_read_input_tokens"]
 
         # Calculate total tokens (including cache tokens)
         self.metrics.total_tokens = (
-            self.metrics.input_tokens +
-            self.metrics.output_tokens +
-            self.metrics.cache_creation_input_tokens +
-            self.metrics.cache_read_input_tokens
+            self.metrics.input_tokens
+            + self.metrics.output_tokens
+            + self.metrics.cache_creation_input_tokens
+            + self.metrics.cache_read_input_tokens
         )
 
         # SDK provides accurate cost tracking
-        if hasattr(result, 'total_cost_usd') and result.total_cost_usd:
+        if hasattr(result, "total_cost_usd") and result.total_cost_usd:
             self.metrics.total_cost += result.total_cost_usd
 
         self.metrics.updated_at = datetime.now(timezone.utc)
@@ -289,7 +292,11 @@ class Agent:
         return {
             "total_tokens_used": self.metrics.total_tokens,
             "max_context_tokens": max_context,
-            "usage_percentage": (self.metrics.total_tokens / max_context) * 100 if self.metrics.total_tokens > 0 else 0,
+            "usage_percentage": (
+                (self.metrics.total_tokens / max_context) * 100
+                if self.metrics.total_tokens > 0
+                else 0
+            ),
             "session_id": self.config.session_id,
             "estimated_remaining": max_context - self.metrics.total_tokens,
         }

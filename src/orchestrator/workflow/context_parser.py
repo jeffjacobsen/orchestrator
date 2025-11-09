@@ -51,13 +51,19 @@ class AgentContext:
             context_parts.append(f"## Previous Agent Summary\n{self.summary}")
 
         if self.files_created:
-            context_parts.append("\n## Files Created\n" + "\n".join(f"- {f}" for f in self.files_created))
+            context_parts.append(
+                "\n## Files Created\n" + "\n".join(f"- {f}" for f in self.files_created)
+            )
 
         if self.files_modified:
-            context_parts.append("\n## Files Modified\n" + "\n".join(f"- {f}" for f in self.files_modified))
+            context_parts.append(
+                "\n## Files Modified\n" + "\n".join(f"- {f}" for f in self.files_modified)
+            )
 
         if self.key_findings:
-            context_parts.append("\n## Key Findings\n" + "\n".join(f"- {f}" for f in self.key_findings))
+            context_parts.append(
+                "\n## Key Findings\n" + "\n".join(f"- {f}" for f in self.key_findings)
+            )
 
         if self.recommendations:
             context_parts.append(f"\n## Recommendations\n{self.recommendations}")
@@ -118,37 +124,39 @@ def extract_structured_output(agent_output: str, agent_role: str) -> AgentContex
     context = AgentContext(full_output=agent_output)
 
     # Extract summary section
-    summary_match = re.search(r'## Summary\s*\n(.*?)(?=\n##|\Z)', agent_output, re.DOTALL)
+    summary_match = re.search(r"## Summary\s*\n(.*?)(?=\n##|\Z)", agent_output, re.DOTALL)
     if summary_match:
         context.summary = summary_match.group(1).strip()
 
     # Extract files created
     files_created_match = re.search(
-        r'## (?:Files Created|Documentation Files Created|Test Files Created)\s*\n(.*?)(?=\n##|\Z)',
+        r"## (?:Files Created|Documentation Files Created|Test Files Created)\s*\n(.*?)(?=\n##|\Z)",
         agent_output,
-        re.DOTALL
+        re.DOTALL,
     )
     if files_created_match:
         files_text = files_created_match.group(1)
         context.files_created = _extract_file_list(files_text)
 
     # Extract files modified
-    files_modified_match = re.search(r'## Files Modified\s*\n(.*?)(?=\n##|\Z)', agent_output, re.DOTALL)
+    files_modified_match = re.search(
+        r"## Files Modified\s*\n(.*?)(?=\n##|\Z)", agent_output, re.DOTALL
+    )
     if files_modified_match:
         files_text = files_modified_match.group(1)
         context.files_modified = _extract_file_list(files_text)
 
     # Extract key findings
-    findings_match = re.search(r'## Key Findings\s*\n(.*?)(?=\n##|\Z)', agent_output, re.DOTALL)
+    findings_match = re.search(r"## Key Findings\s*\n(.*?)(?=\n##|\Z)", agent_output, re.DOTALL)
     if findings_match:
         findings_text = findings_match.group(1)
         context.key_findings = _extract_bullet_list(findings_text)
 
     # Extract recommendations
     rec_match = re.search(
-        r'## (?:Recommendations for Next Agent|For Next Agent)\s*\n(.*?)(?=\n##|\Z)',
+        r"## (?:Recommendations for Next Agent|For Next Agent)\s*\n(.*?)(?=\n##|\Z)",
         agent_output,
-        re.DOTALL
+        re.DOTALL,
     )
     if rec_match:
         context.recommendations = rec_match.group(1).strip()
@@ -171,9 +179,9 @@ def extract_structured_output(agent_output: str, agent_role: str) -> AgentContex
 def _extract_file_list(text: str) -> List[str]:
     """Extract file paths from markdown list."""
     files = []
-    for line in text.split('\n'):
+    for line in text.split("\n"):
         line = line.strip()
-        if line.startswith('- '):
+        if line.startswith("- "):
             file_path = line[2:].strip()
             if file_path:
                 files.append(file_path)
@@ -183,9 +191,9 @@ def _extract_file_list(text: str) -> List[str]:
 def _extract_bullet_list(text: str) -> List[str]:
     """Extract bullet points from markdown list."""
     items = []
-    for line in text.split('\n'):
+    for line in text.split("\n"):
         line = line.strip()
-        if line.startswith('- '):
+        if line.startswith("- "):
             item = line[2:].strip()
             if item:
                 items.append(item)
@@ -197,18 +205,18 @@ def _extract_test_results(output: str) -> Optional[Dict[str, Any]]:
     results: Dict[str, Any] = {}
 
     # Look for pytest-style output
-    passed_match = re.search(r'(\d+) passed', output)
+    passed_match = re.search(r"(\d+) passed", output)
     if passed_match:
-        results['passed'] = int(passed_match.group(1))
+        results["passed"] = int(passed_match.group(1))
 
-    failed_match = re.search(r'(\d+) failed', output)
+    failed_match = re.search(r"(\d+) failed", output)
     if failed_match:
-        results['failed'] = int(failed_match.group(1))
+        results["failed"] = int(failed_match.group(1))
 
     # Extract failure details
-    failures_match = re.search(r'FAILED.*?(?=\n(?:PASSED|=====|$))', output, re.DOTALL)
+    failures_match = re.search(r"FAILED.*?(?=\n(?:PASSED|=====|$))", output, re.DOTALL)
     if failures_match:
-        results['failures'] = failures_match.group(0)
+        results["failures"] = failures_match.group(0)
 
     return results if results else None
 
@@ -217,7 +225,7 @@ def _has_test_failures(test_results: Optional[Dict[str, Any]]) -> bool:
     """Check if test results indicate failures."""
     if not test_results:
         return False
-    failed_count = test_results.get('failed', 0)
+    failed_count = test_results.get("failed", 0)
     return bool(failed_count > 0)
 
 
@@ -227,9 +235,9 @@ def _extract_test_errors(output: str) -> List[str]:
 
     # Look for assertion errors or exceptions
     error_patterns = [
-        r'AssertionError: (.*?)(?=\n|$)',
-        r'Error: (.*?)(?=\n|$)',
-        r'Exception: (.*?)(?=\n|$)',
+        r"AssertionError: (.*?)(?=\n|$)",
+        r"Error: (.*?)(?=\n|$)",
+        r"Exception: (.*?)(?=\n|$)",
     ]
 
     for pattern in error_patterns:
@@ -243,12 +251,12 @@ def _has_review_issues(output: str) -> bool:
     """Check if reviewer found issues."""
     # Look for negative indicators
     indicators = [
-        'does not meet',
-        'missing',
-        'issues found',
-        'problems',
-        'incorrect',
-        'needs revision',
+        "does not meet",
+        "missing",
+        "issues found",
+        "problems",
+        "incorrect",
+        "needs revision",
     ]
     output_lower = output.lower()
     return any(ind in output_lower for ind in indicators)
@@ -259,7 +267,7 @@ def _extract_review_issues(output: str) -> List[str]:
     issues = []
 
     # Look for "Issues" section
-    issues_match = re.search(r'## Issues\s*\n(.*?)(?=\n##|\Z)', output, re.DOTALL)
+    issues_match = re.search(r"## Issues\s*\n(.*?)(?=\n##|\Z)", output, re.DOTALL)
     if issues_match:
         issues = _extract_bullet_list(issues_match.group(1))
 
